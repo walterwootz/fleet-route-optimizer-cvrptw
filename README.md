@@ -29,7 +29,7 @@
 
 > **Capacitated Vehicle Routing Problem with Time Windows** - An advanced optimization system for logistics and delivery route planning
 
-> ⚠️ **Note**: This is a production-ready project with clean architecture, demonstrating professional vehicle routing optimization techniques.
+> ⚠️ **Note**: This is not a production-ready project with clean architecture, demonstrating professional vehicle routing optimization techniques.
 
 ## 📋 Overview
 
