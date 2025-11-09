@@ -6,14 +6,6 @@
 
 <div align="center">
 
-[![Donate with PayPal](https://img.shields.io/badge/Donate-PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://www.paypal.com/donate/?hosted_button_id=9CSNUCM9FX53S)
-
-**💙 Support this project! If you find it useful, consider buying me a coffee ☕**
-
-</div>
-
-<div align="center">
-
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.121.0-009688?style=for-the-badge&logo=fastapi&logoColor=white)
 ![React](https://img.shields.io/badge/React-18.0+-61DAFB?style=for-the-badge&logo=react&logoColor=black)
@@ -28,8 +20,16 @@
 </div>
 
 > **Capacitated Vehicle Routing Problem with Time Windows** - An advanced optimization system for logistics and delivery route planning
+> ⚠️ **Note**: This is not a production-ready project but has a clean architecture, demonstrating professional vehicle routing optimization techniques.
 
-> ⚠️ **Note**: This is not a production-ready project with clean architecture, demonstrating professional vehicle routing optimization techniques.
+<div align="center">
+
+[![Donate with PayPal](https://img.shields.io/badge/Donate-PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://www.paypal.com/donate/?hosted_button_id=9CSNUCM9FX53S)
+
+**💙 Support this project! If you find it useful, consider buying me a coffee ☕**
+
+</div>
+
 
 ## 📋 Overview
 
