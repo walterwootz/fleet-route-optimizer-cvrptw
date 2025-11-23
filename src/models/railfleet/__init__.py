@@ -14,6 +14,7 @@ from .maintenance import (
 from .workshop import Workshop
 from .transfer import TransferPlan, TransferAssignment, TransferStatus, TransferPriority
 from .hr import Staff, StaffAssignment, StaffRole, StaffStatus
+from .docs import DocumentLink, DocumentVersion, DocumentAccessLog, DocumentType, DocumentStatus
 
 __all__ = [
     "User",
@@ -35,4 +36,9 @@ __all__ = [
     "StaffAssignment",
     "StaffRole",
     "StaffStatus",
+    "DocumentLink",
+    "DocumentVersion",
+    "DocumentAccessLog",
+    "DocumentType",
+    "DocumentStatus",
 ]
