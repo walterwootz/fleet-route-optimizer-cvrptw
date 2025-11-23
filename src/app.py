@@ -1,10 +1,19 @@
-"""Main application entry point."""
+"""Main application entry point for RailFleet Manager."""
 
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .api import router
+# Original solver routes
+from .api import router as solver_router
+
+# RailFleet Manager routes
+from .api.v1.endpoints import auth, vehicles, maintenance, workshops, sync
+
+# Database
+from .core.database import init_db
+
+# Logging
 from .config import setup_logging, get_settings, get_logger
 
 # Setup logging
@@ -16,9 +25,23 @@ settings = get_settings()
 
 # Create FastAPI app
 app = FastAPI(
-    title=settings.app_name,
-    description="Fleet Route Optimizer - API for solving Capacitated Vehicle Routing Problem with Time Windows (CVRPTW) using real-world distances and traffic patterns",
-    version="2.0.0"
+    title="RailFleet Manager API",
+    description="""
+    **RailFleet Manager** - Complete Railway Fleet Management System
+
+    **Features:**
+    - 🚂 **Fleet Management**: Track locomotives, maintenance, and operations
+    - 🔧 **Maintenance Management**: Schedule and track maintenance tasks and work orders
+    - 🏭 **Workshop Management**: Manage workshops, capacity, and certifications
+    - 🔄 **Offline-First Sync**: Conflict detection and resolution for mobile/offline use
+    - 🔐 **Authentication & Authorization**: Role-based access control (RBAC)
+    - 📊 **Route Optimization**: CVRPTW solver with OR-Tools and Gurobi
+
+    **Integrated with FLEET-ONE Playbook for railway fleet operations**
+    """,
+    version="2.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
 )
 
 # Enable CORS
@@ -30,21 +53,53 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include API routes
-app.include_router(router, tags=["solver"])
+# Include RailFleet Manager API routes
+app.include_router(auth.router, prefix="/api/v1", tags=["Authentication"])
+app.include_router(vehicles.router, prefix="/api/v1", tags=["Vehicles"])
+app.include_router(maintenance.router, prefix="/api/v1", tags=["Maintenance"])
+app.include_router(workshops.router, prefix="/api/v1", tags=["Workshops"])
+app.include_router(sync.router, prefix="/api/v1", tags=["Synchronization"])
+
+# Include original CVRPTW solver routes
+app.include_router(solver_router, prefix="/api/v1/solver", tags=["Route Optimization"])
+
+
+@app.get("/", tags=["Root"])
+def root():
+    """Root endpoint with API information."""
+    return {
+        "name": "RailFleet Manager API",
+        "version": "2.0.0",
+        "description": "Complete Railway Fleet Management System with Route Optimization",
+        "docs": "/docs",
+        "features": [
+            "Fleet Management",
+            "Maintenance Tracking",
+            "Workshop Management",
+            "Offline-First Sync",
+            "Route Optimization (CVRPTW)",
+        ],
+    }
 
 
 @app.on_event("startup")
 async def startup_event():
     """Run on application startup."""
-    logger.info(f"{settings.app_name} starting up...")
+    logger.info("RailFleet Manager starting up...")
     logger.info(f"Debug mode: {settings.debug}")
+
+    # Initialize database
+    try:
+        init_db()
+        logger.info("Database initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize database: {e}")
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Run on application shutdown."""
-    logger.info(f"{settings.app_name} shutting down...")
+    logger.info("RailFleet Manager shutting down...")
 
 
 if __name__ == "__main__":
