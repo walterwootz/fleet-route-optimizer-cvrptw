@@ -15,6 +15,7 @@ from .workshop import Workshop
 from .transfer import TransferPlan, TransferAssignment, TransferStatus, TransferPriority
 from .hr import Staff, StaffAssignment, StaffRole, StaffStatus
 from .docs import DocumentLink, DocumentVersion, DocumentAccessLog, DocumentType, DocumentStatus
+from .event_log import EventLog
 
 __all__ = [
     "User",
@@ -41,4 +42,5 @@ __all__ = [
     "DocumentAccessLog",
     "DocumentType",
     "DocumentStatus",
+    "EventLog",
 ]
