@@ -17,6 +17,7 @@ from .hr import Staff, StaffAssignment, StaffRole, StaffStatus
 from .docs import DocumentLink, DocumentVersion, DocumentAccessLog, DocumentType, DocumentStatus
 from .event_log import EventLog
 from .inventory import Part, StockLocation, StockMove, UsedPart, RailwayClass, StockMoveType
+from .procurement import Supplier, PurchaseOrder, PurchaseOrderLine, PurchaseOrderStatus
 
 __all__ = [
     "User",
@@ -50,4 +51,8 @@ __all__ = [
     "UsedPart",
     "RailwayClass",
     "StockMoveType",
+    "Supplier",
+    "PurchaseOrder",
+    "PurchaseOrderLine",
+    "PurchaseOrderStatus",
 ]
