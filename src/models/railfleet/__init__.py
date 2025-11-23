@@ -18,6 +18,7 @@ from .docs import DocumentLink, DocumentVersion, DocumentAccessLog, DocumentType
 from .event_log import EventLog
 from .inventory import Part, StockLocation, StockMove, UsedPart, RailwayClass, StockMoveType
 from .procurement import Supplier, PurchaseOrder, PurchaseOrderLine, PurchaseOrderStatus
+from .finance import Invoice, InvoiceLine, Budget, CostCenter, InvoiceStatus
 
 __all__ = [
     "User",
@@ -55,4 +56,9 @@ __all__ = [
     "PurchaseOrder",
     "PurchaseOrderLine",
     "PurchaseOrderStatus",
+    "Invoice",
+    "InvoiceLine",
+    "Budget",
+    "CostCenter",
+    "InvoiceStatus",
 ]
