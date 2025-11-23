@@ -15,16 +15,37 @@ Complete MVP collection covering:
 - **Sync** (Push, Pull, Conflicts)
 - **Scheduler** (Solve, What-If scenarios)
 
-### `phase2_scheduler.json` (Planned)
-Dedicated scheduler & sync collection:
-- Solver endpoints
-- What-If scenarios
-- Event log queries
-- Conflict resolution flows
+### `RailFleet_Manager_Phase2.postman_collection.json` ⭐ NEW
+Complete Phase 2 MVP collection with 3 demo scenarios:
+- **Authentication** (Login with automatic token management)
+- **Demo 1: Inventory Flow** (8 requests)
+  - Part → Stock Location → Supplier → Purchase Order → Approve → Order → Receive → Stock Moves
+- **Demo 2: Finance Flow** (5 requests)
+  - Budget → Invoice → Match against PO → Approve → Verify Budget Update
+- **Demo 3: Reports** (5 requests)
+  - Availability, On-Time Ratio, Parts Usage, Cost Report, Dashboard Summary
 
 ## Usage
 
-### Import Collection
+### Import Phase 2 Collection (Recommended)
+
+1. **Import Collection**
+   - Open Postman
+   - Click "Import"
+   - Select `RailFleet_Manager_Phase2.postman_collection.json`
+   - Collection imported with pre-configured requests
+
+2. **Import Environment**
+   - Click "Import"
+   - Select `RailFleet_Manager.postman_environment.json`
+   - All variables pre-configured (base_url, username, password, etc.)
+
+3. **Run Demo Scenarios**
+   - Open collection → Select "Demo 1: Inventory Flow"
+   - Click "Run folder" to execute all 8 requests sequentially
+   - Check test results and console logs
+
+### Import Phase 1 Collection
 
 1. Open Postman
 2. Click "Import"
@@ -33,7 +54,26 @@ Dedicated scheduler & sync collection:
 
 ### Environment Variables
 
-Create a Postman environment with:
+#### Phase 2 Environment (included in `RailFleet_Manager.postman_environment.json`)
+
+```json
+{
+  "base_url": "http://localhost:8000",
+  "username": "admin@railfleet.com",
+  "password": "admin123",
+  "auth_token": "",
+  "token_expiry": "",
+  "period": "2025-11",
+  "part_id": "",
+  "location_id": "",
+  "supplier_id": "",
+  "po_id": "",
+  "invoice_id": "",
+  "budget_id": ""
+}
+```
+
+#### Phase 1 Environment (manual setup)
 
 ```json
 {
@@ -97,20 +137,70 @@ pm.sendRequest({
 
 ## Example Scenarios
 
-### Scenario 1: HU Planning
+### Phase 2 Demo Scenarios (NEW) ⭐
+
+#### Demo 1: Complete Inventory-Procurement Flow
+**Goal:** Create part, receive goods via PO, track stock moves
+
+1. **Login** → Save auth token (automatic)
+2. **Create Part** (e.g., "Brake Pad - Standard")
+3. **Create Stock Location** (e.g., "Munich Workshop")
+4. **Create Supplier** (e.g., "Knorr-Bremse")
+5. **Create Purchase Order** (Status: DRAFT)
+6. **Approve PO** → Status: APPROVED
+7. **Order PO** → Status: ORDERED
+8. **Receive Goods** → Automatically generates Stock Moves ✨
+9. **Verify Stock Moves** → Check inventory updated
+
+**Expected Result:**
+- Part stock increased by received quantity
+- Stock moves created automatically
+- Purchase order completed
+
+#### Demo 2: Finance & Budget Management Flow
+**Goal:** Create invoice, match to PO, update budget
+
+1. **Create Budget** for period (e.g., 2025-11)
+2. **Create Invoice** (Status: DRAFT)
+3. **Match Invoice vs PO** → Status: REVIEWED
+4. **Approve Invoice** → Automatically updates Budget ✨
+5. **Verify Budget Updated** → Check actual_amount increased
+
+**Expected Result:**
+- Invoice approved and posted
+- Budget actual_amount updated
+- Variance calculation complete
+
+#### Demo 3: Reporting & Analytics
+**Goal:** Generate KPI reports and dashboard
+
+1. **Availability Report** → Overall fleet availability %
+2. **On-Time Ratio** → Workshop delivery performance
+3. **Parts Usage Report** → Consumption by part
+4. **Cost Report** → Budget vs actual by cost center
+5. **Dashboard Summary** → All KPIs in one view
+
+**Expected Result:**
+- Comprehensive metrics and KPIs
+- Data aggregated from all modules
+- Ready for management reporting
+
+### Phase 1 Scenarios
+
+#### Scenario 1: HU Planning
 1. List vehicles with upcoming HU
 2. Create maintenance task
 3. Create work order
 4. Run solver to schedule
 5. Update vehicle status
 
-### Scenario 2: Offline Sync
+#### Scenario 2: Offline Sync
 1. Workshop updates work order (offline)
 2. Push events to server
 3. Check for conflicts
 4. Resolve conflicts (if any)
 
-### Scenario 3: Inventory Management
+#### Scenario 3: Inventory Management
 1. Create parts
 2. Stock moves (Wareneingang)
 3. Create purchase order
@@ -140,6 +230,40 @@ pm.sendRequest({
 - Idempotency-Key recommended for duplicate prevention
 
 ## Collection Structure
+
+### Phase 2 Collection Structure ⭐
+
+```
+RailFleet Manager - Phase 2 MVP
+├── 📁 Authentication
+│   └── Login (with automatic token management)
+│
+├── 📁 Demo 1: Inventory Flow
+│   ├── 1. Create Part
+│   ├── 2. Create Stock Location
+│   ├── 3. Create Supplier
+│   ├── 4. Create Purchase Order
+│   ├── 5. Approve PO
+│   ├── 6. Order PO
+│   ├── 7. Receive Goods (Creates Stock Moves)
+│   └── 8. Verify Stock Moves
+│
+├── 📁 Demo 2: Finance Flow
+│   ├── 1. Create Budget
+│   ├── 2. Create Invoice
+│   ├── 3. Match Invoice vs PO
+│   ├── 4. Approve Invoice (Updates Budget)
+│   └── 5. Verify Budget Updated
+│
+└── 📁 Demo 3: Reports
+    ├── Availability Report
+    ├── On-Time Ratio
+    ├── Parts Usage
+    ├── Cost Report
+    └── Dashboard Summary
+```
+
+### Phase 1 Collection Structure
 
 ```
 RailFleet Manager MVP
@@ -179,6 +303,6 @@ RailFleet Manager MVP
 
 ---
 
-**Version:** 2.0.0
+**Version:** 2.1.0 (Phase 2)
 **Last Updated:** 2025-11-23
-**Status:** In Progress (WP1)
+**Status:** ✅ Complete (WP14)

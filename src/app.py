@@ -47,7 +47,7 @@ app = FastAPI(
 
     **Integrated with FLEET-ONE Playbook for railway fleet operations**
     """,
-    version="2.0.0",
+    version="2.1.0",
     docs_url="/docs",
     redoc_url="/redoc",
 )
@@ -87,7 +87,7 @@ def root():
     """Root endpoint with API information."""
     return {
         "name": "RailFleet Manager API",
-        "version": "2.0.0",
+        "version": "2.1.0",
         "description": "Complete Railway Fleet Management System with Route Optimization",
         "docs": "/docs",
         "features": [
