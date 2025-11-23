@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .api import router as solver_router
 
 # RailFleet Manager routes
-from .api.v1.endpoints import auth, vehicles, maintenance, workshops, sync, scheduler, transfer, hr, docs, policy, parts, stock, procurement, finance
+from .api.v1.endpoints import auth, vehicles, maintenance, workshops, sync, scheduler, transfer, hr, docs, policy, parts, stock, procurement, finance, reports
 
 # Database
 from .core.database import init_db
@@ -39,6 +39,7 @@ app = FastAPI(
     - 📦 **Inventory Management**: Parts, stock locations, and stock moves tracking
     - 🛒 **Procurement**: Supplier management and purchase order workflow (DRAFT → CLOSED)
     - 💰 **Finance**: Invoice management, PO matching, and budget tracking with variance analysis
+    - 📈 **Reporting & KPIs**: Availability, on-time ratio, parts usage, and cost reports
     - 🔄 **Offline-First Sync**: Conflict detection and resolution for mobile/offline use
     - 🔐 **Authentication & Authorization**: Role-based access control (RBAC)
     - 📊 **Route Optimization**: CVRPTW solver with OR-Tools and Gurobi
@@ -75,6 +76,7 @@ app.include_router(parts.router, prefix="/api/v1", tags=["Inventory"])
 app.include_router(stock.router, prefix="/api/v1", tags=["Inventory"])
 app.include_router(procurement.router, prefix="/api/v1", tags=["Procurement"])
 app.include_router(finance.router, prefix="/api/v1", tags=["Finance"])
+app.include_router(reports.router, prefix="/api/v1", tags=["Reports"])
 
 # Include original CVRPTW solver routes
 app.include_router(solver_router, prefix="/api/v1/solver", tags=["Route Optimization"])
@@ -98,6 +100,7 @@ def root():
             "Inventory Management",
             "Procurement & PO Management",
             "Finance & Budget Tracking",
+            "Reporting & KPIs",
             "Offline-First Sync",
             "Route Optimization (CVRPTW)",
             "Workshop Scheduler (CP-SAT)",
