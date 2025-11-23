@@ -12,6 +12,8 @@ from .maintenance import (
     WorkOrderPriority,
 )
 from .workshop import Workshop
+from .transfer import TransferPlan, TransferAssignment, TransferStatus, TransferPriority
+from .hr import Staff, StaffAssignment, StaffRole, StaffStatus
 
 __all__ = [
     "User",
@@ -25,4 +27,12 @@ __all__ = [
     "WorkOrderStatus",
     "WorkOrderPriority",
     "Workshop",
+    "TransferPlan",
+    "TransferAssignment",
+    "TransferStatus",
+    "TransferPriority",
+    "Staff",
+    "StaffAssignment",
+    "StaffRole",
+    "StaffStatus",
 ]

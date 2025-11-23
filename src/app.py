@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .api import router as solver_router
 
 # RailFleet Manager routes
-from .api.v1.endpoints import auth, vehicles, maintenance, workshops, sync, scheduler
+from .api.v1.endpoints import auth, vehicles, maintenance, workshops, sync, scheduler, transfer, hr
 
 # Database
 from .core.database import init_db
@@ -33,9 +33,12 @@ app = FastAPI(
     - 🚂 **Fleet Management**: Track locomotives, maintenance, and operations
     - 🔧 **Maintenance Management**: Schedule and track maintenance tasks and work orders
     - 🏭 **Workshop Management**: Manage workshops, capacity, and certifications
+    - 🚚 **Transfer Service**: Plan and track locomotive movements between locations
+    - 👥 **HR Service**: Staff management and personnel assignment planning
     - 🔄 **Offline-First Sync**: Conflict detection and resolution for mobile/offline use
     - 🔐 **Authentication & Authorization**: Role-based access control (RBAC)
     - 📊 **Route Optimization**: CVRPTW solver with OR-Tools and Gurobi
+    - 📅 **Workshop Scheduler**: OR-Tools CP-SAT based scheduling with constraints
 
     **Integrated with FLEET-ONE Playbook for railway fleet operations**
     """,
@@ -60,6 +63,8 @@ app.include_router(maintenance.router, prefix="/api/v1", tags=["Maintenance"])
 app.include_router(workshops.router, prefix="/api/v1", tags=["Workshops"])
 app.include_router(sync.router, prefix="/api/v1", tags=["Synchronization"])
 app.include_router(scheduler.router, prefix="/api/v1", tags=["Scheduler"])
+app.include_router(transfer.router, prefix="/api/v1", tags=["Transfer"])
+app.include_router(hr.router, prefix="/api/v1", tags=["HR"])
 
 # Include original CVRPTW solver routes
 app.include_router(solver_router, prefix="/api/v1/solver", tags=["Route Optimization"])
@@ -77,8 +82,11 @@ def root():
             "Fleet Management",
             "Maintenance Tracking",
             "Workshop Management",
+            "Transfer Service",
+            "HR & Staff Management",
             "Offline-First Sync",
             "Route Optimization (CVRPTW)",
+            "Workshop Scheduler (CP-SAT)",
         ],
     }
 
