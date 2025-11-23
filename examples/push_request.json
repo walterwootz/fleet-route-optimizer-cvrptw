@@ -1,0 +1,30 @@
+{
+  "device_id": "MOB-001",
+  "events": [
+    {
+      "id": "7d0c1234-5678-90ab-cdef-1234567890ab",
+      "source_role": "workshop",
+      "entity_type": "work_order",
+      "entity_id": "550e8400-e29b-41d4-a716-446655440000",
+      "field_changes": {
+        "status": "in_progress",
+        "actual_start_ts": "2026-01-04T08:05:00Z",
+        "findings": "Brake system inspection started"
+      },
+      "timestamp": "2026-01-04T08:05:00Z"
+    },
+    {
+      "id": "8e1d2345-6789-01bc-def0-234567890abc",
+      "source_role": "workshop",
+      "entity_type": "work_order",
+      "entity_id": "550e8400-e29b-41d4-a716-446655440000",
+      "field_changes": {
+        "work_performed": "Replaced brake pads and inspected brake lines. All systems nominal.",
+        "actual_end_ts": "2026-01-04T14:30:00Z",
+        "status": "completed",
+        "actual_cost": 2450.50
+      },
+      "timestamp": "2026-01-04T14:30:00Z"
+    }
+  ]
+}

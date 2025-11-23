@@ -1,11 +1,46 @@
 version: '3.8'
 
 services:
+  # PostgreSQL Database for RailFleet Manager
+  postgres:
+    image: postgres:15-alpine
+    container_name: railfleet-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: railfleet
+      POSTGRES_PASSWORD: railfleet123
+      POSTGRES_DB: railfleet_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U railfleet"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: railfleet-pgadmin
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@railfleet.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  # Backend API (RailFleet Manager + CVRPTW Solver)
   backend:
-    build: 
+    build:
       context: ..
       dockerfile: Dockerfile
-    container_name: cvrptw-solver-backend
+    container_name: railfleet-backend
     ports:
       - "8000:8000"
     volumes:
@@ -15,8 +50,14 @@ services:
       - ../distance_cache.db:/app/src/distance_cache.db
       # Optional: mount inputs if you want to modify them externally
       - ../inputs:/app/inputs
+      # Mount policy files
+      - ../policy:/app/policy
     environment:
       - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql://railfleet:railfleet123@postgres:5432/railfleet_db
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
@@ -25,9 +66,10 @@ services:
       retries: 3
       start_period: 40s
 
+  # Frontend Web UI
   frontend:
     image: node:18-alpine
-    container_name: cvrptw-solver-frontend
+    container_name: railfleet-frontend
     working_dir: /app
     ports:
       - "3000:3000"
@@ -41,3 +83,7 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+
+volumes:
+  postgres_data:
+  pgadmin_data:
