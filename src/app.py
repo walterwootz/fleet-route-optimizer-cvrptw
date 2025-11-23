@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .api import router as solver_router
 
 # RailFleet Manager routes
-from .api.v1.endpoints import auth, vehicles, maintenance, workshops, sync, scheduler, transfer, hr, docs
+from .api.v1.endpoints import auth, vehicles, maintenance, workshops, sync, scheduler, transfer, hr, docs, policy
 
 # Database
 from .core.database import init_db
@@ -67,6 +67,7 @@ app.include_router(scheduler.router, prefix="/api/v1", tags=["Scheduler"])
 app.include_router(transfer.router, prefix="/api/v1", tags=["Transfer"])
 app.include_router(hr.router, prefix="/api/v1", tags=["HR"])
 app.include_router(docs.router, prefix="/api/v1", tags=["Documents"])
+app.include_router(policy.router, prefix="/api/v1", tags=["Policy"])
 
 # Include original CVRPTW solver routes
 app.include_router(solver_router, prefix="/api/v1/solver", tags=["Route Optimization"])
