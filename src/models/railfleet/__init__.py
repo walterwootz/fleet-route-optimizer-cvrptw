@@ -16,6 +16,7 @@ from .transfer import TransferPlan, TransferAssignment, TransferStatus, Transfer
 from .hr import Staff, StaffAssignment, StaffRole, StaffStatus
 from .docs import DocumentLink, DocumentVersion, DocumentAccessLog, DocumentType, DocumentStatus
 from .event_log import EventLog
+from .inventory import Part, StockLocation, StockMove, UsedPart, RailwayClass, StockMoveType
 
 __all__ = [
     "User",
@@ -43,4 +44,10 @@ __all__ = [
     "DocumentType",
     "DocumentStatus",
     "EventLog",
+    "Part",
+    "StockLocation",
+    "StockMove",
+    "UsedPart",
+    "RailwayClass",
+    "StockMoveType",
 ]

@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .api import router as solver_router
 
 # RailFleet Manager routes
-from .api.v1.endpoints import auth, vehicles, maintenance, workshops, sync, scheduler, transfer, hr, docs, policy
+from .api.v1.endpoints import auth, vehicles, maintenance, workshops, sync, scheduler, transfer, hr, docs, policy, parts, stock
 
 # Database
 from .core.database import init_db
@@ -36,6 +36,7 @@ app = FastAPI(
     - 🚚 **Transfer Service**: Plan and track locomotive movements between locations
     - 👥 **HR Service**: Staff management and personnel assignment planning
     - 📄 **Document Management**: ECM-Light with expiration tracking and audit trail
+    - 📦 **Inventory Management**: Parts, stock locations, and stock moves tracking
     - 🔄 **Offline-First Sync**: Conflict detection and resolution for mobile/offline use
     - 🔐 **Authentication & Authorization**: Role-based access control (RBAC)
     - 📊 **Route Optimization**: CVRPTW solver with OR-Tools and Gurobi
@@ -68,6 +69,8 @@ app.include_router(transfer.router, prefix="/api/v1", tags=["Transfer"])
 app.include_router(hr.router, prefix="/api/v1", tags=["HR"])
 app.include_router(docs.router, prefix="/api/v1", tags=["Documents"])
 app.include_router(policy.router, prefix="/api/v1", tags=["Policy"])
+app.include_router(parts.router, prefix="/api/v1", tags=["Inventory"])
+app.include_router(stock.router, prefix="/api/v1", tags=["Inventory"])
 
 # Include original CVRPTW solver routes
 app.include_router(solver_router, prefix="/api/v1/solver", tags=["Route Optimization"])
@@ -88,6 +91,7 @@ def root():
             "Transfer Service",
             "HR & Staff Management",
             "Document Management (ECM-Light)",
+            "Inventory Management",
             "Offline-First Sync",
             "Route Optimization (CVRPTW)",
             "Workshop Scheduler (CP-SAT)",

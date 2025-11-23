@@ -86,3 +86,51 @@ FOR EACH ROW EXECUTE FUNCTION decrement_part_stock();
 -- Trigger for updated_at
 CREATE TRIGGER update_part_inventory_updated_at BEFORE UPDATE ON part_inventory
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Stock Locations (WP9 - Inventory Management)
+CREATE TABLE IF NOT EXISTS stock_locations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    location_code VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    location_type VARCHAR(50) NOT NULL,
+    workshop_id UUID,
+    address VARCHAR(500),
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_stock_locations_code ON stock_locations(location_code);
+CREATE INDEX IF NOT EXISTS idx_stock_locations_type ON stock_locations(location_type);
+CREATE INDEX IF NOT EXISTS idx_stock_locations_active ON stock_locations(is_active) WHERE is_active = true;
+
+COMMENT ON TABLE stock_locations IS 'Stock locations for warehouse management';
+COMMENT ON COLUMN stock_locations.location_type IS 'WORKSHOP, CENTRAL, TRAIN, or CONSIGNMENT';
+
+-- Trigger for updated_at on stock_locations
+CREATE TRIGGER update_stock_locations_updated_at BEFORE UPDATE ON stock_locations
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Stock Moves (WP9 - Inventory Management)
+CREATE TABLE IF NOT EXISTS stock_moves (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    part_no VARCHAR(100) REFERENCES part_inventory(part_no) NOT NULL,
+    move_type VARCHAR(50) NOT NULL,
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    from_location_id UUID REFERENCES stock_locations(id),
+    to_location_id UUID REFERENCES stock_locations(id),
+    work_order_id UUID,
+    reference_doc VARCHAR(255),
+    unit_price DECIMAL(10,2),
+    performed_by UUID,
+    performed_at TIMESTAMPTZ DEFAULT NOW(),
+    notes VARCHAR(500)
+);
+
+CREATE INDEX IF NOT EXISTS idx_stock_moves_part ON stock_moves(part_no);
+CREATE INDEX IF NOT EXISTS idx_stock_moves_type ON stock_moves(move_type);
+CREATE INDEX IF NOT EXISTS idx_stock_moves_time ON stock_moves(performed_at);
+CREATE INDEX IF NOT EXISTS idx_stock_moves_wo ON stock_moves(work_order_id) WHERE work_order_id IS NOT NULL;
+
+COMMENT ON TABLE stock_moves IS 'Stock movement tracking for inventory transactions';
+COMMENT ON COLUMN stock_moves.move_type IS 'INCOMING, USAGE, TRANSFER, WRITEOFF, or ADJUSTMENT';
