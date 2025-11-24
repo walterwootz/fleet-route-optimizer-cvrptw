@@ -272,3 +272,121 @@ def get_prediction_stats(
         "by_model": {name: count for name, count in model_counts},
         "by_entity_type": {entity_type: count for entity_type, count in entity_counts},
     }
+
+
+# ============================================================================
+# Model-Specific Prediction Endpoints (WP21)
+# ============================================================================
+
+
+@router.get("/ml/predict/maintenance/{vehicle_id}")
+def predict_maintenance(
+    vehicle_id: str,
+    risk_level: str = "medium",
+    db: Session = Depends(get_db),
+):
+    """Predict maintenance needs for a vehicle.
+
+    Args:
+        vehicle_id: Vehicle identifier
+        risk_level: Risk tolerance (low, medium, high)
+        db: Database session
+
+    Returns:
+        Maintenance prediction with risk score
+    """
+    fe = FeatureEngineering(db)
+    features = fe.extract_vehicle_features(vehicle_id)
+
+    # In production, load and use trained model
+    # For now, return feature-based heuristic
+    risk_score = min(1.0, features.features.get("days_since_maintenance", 0) / 90)
+
+    return {
+        "vehicle_id": vehicle_id,
+        "needs_maintenance": risk_score > 0.5,
+        "risk_score": risk_score,
+        "risk_level": risk_level,
+        "features": features.features,
+        "recommendation": (
+            "Schedule maintenance soon" if risk_score > 0.7
+            else "Monitor condition" if risk_score > 0.4
+            else "Vehicle OK"
+        ),
+    }
+
+
+@router.get("/ml/predict/workorder-completion/{workorder_id}")
+def predict_workorder_completion(
+    workorder_id: str,
+    db: Session = Depends(get_db),
+):
+    """Predict work order completion time.
+
+    Args:
+        workorder_id: Work order identifier
+        db: Database session
+
+    Returns:
+        Completion prediction
+    """
+    fe = FeatureEngineering(db)
+    features = fe.extract_workorder_features(workorder_id)
+
+    # Heuristic prediction based on features
+    base_days = 5.0
+    complexity_factor = features.features.get("task_count", 0) * 0.5
+    staff_factor = max(0, 3 - features.features.get("assigned_staff_count", 1))
+
+    predicted_days = base_days + complexity_factor + staff_factor
+
+    return {
+        "workorder_id": workorder_id,
+        "predicted_completion_days": round(predicted_days, 1),
+        "is_delayed": predicted_days > 7,
+        "features": features.features,
+        "recommendation": (
+            "Add more staff" if staff_factor > 2
+            else "On track"
+        ),
+    }
+
+
+@router.get("/ml/predict/demand/{part_id}")
+def predict_part_demand(
+    part_id: str,
+    forecast_days: int = 30,
+    db: Session = Depends(get_db),
+):
+    """Predict part demand.
+
+    Args:
+        part_id: Part identifier
+        forecast_days: Forecast horizon in days
+        db: Database session
+
+    Returns:
+        Demand forecast
+    """
+    fe = FeatureEngineering(db)
+    features = fe.extract_inventory_features(part_id)
+
+    # Heuristic forecast
+    avg_usage = features.features.get("avg_usage_30d", 0)
+    predicted_demand = avg_usage * (forecast_days / 30.0)
+
+    urgency = (
+        "critical" if predicted_demand > 50
+        else "high" if predicted_demand > 20
+        else "medium" if predicted_demand > 10
+        else "low"
+    )
+
+    return {
+        "part_id": part_id,
+        "forecast_days": forecast_days,
+        "predicted_demand": round(predicted_demand, 1),
+        "urgency": urgency,
+        "reorder_recommended": urgency in ["high", "critical"],
+        "features": features.features,
+    }
