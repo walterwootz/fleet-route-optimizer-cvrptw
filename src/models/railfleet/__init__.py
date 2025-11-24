@@ -21,6 +21,7 @@ from .procurement import Supplier, PurchaseOrder, PurchaseOrderLine, PurchaseOrd
 from .finance import Invoice, InvoiceLine, Budget, CostCenter, InvoiceStatus
 from .events import Event, EventSnapshot
 from .crdt_metadata import CRDTMetadataModel, CRDTOperation
+from .sync_device import SyncDevice, SyncSession
 
 __all__ = [
     "User",
@@ -65,4 +66,8 @@ __all__ = [
     "InvoiceStatus",
     "Event",
     "EventSnapshot",
+    "CRDTMetadataModel",
+    "CRDTOperation",
+    "SyncDevice",
+    "SyncSession",
 ]
