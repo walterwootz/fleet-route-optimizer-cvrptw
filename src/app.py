@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .api import router as solver_router
 
 # RailFleet Manager routes
-from .api.v1.endpoints import auth, vehicles, maintenance, workshops, sync, scheduler, transfer, hr, docs, policy, parts, stock, procurement, finance, reports, events, projections, sync_crdt, time_travel, ml, analytics
+from .api.v1.endpoints import auth, vehicles, maintenance, workshops, sync, scheduler, transfer, hr, docs, policy, parts, stock, procurement, finance, reports, events, projections, sync_crdt, time_travel, ml, analytics, fleet_one
 
 # Database
 from .core.database import init_db
@@ -30,6 +30,7 @@ app = FastAPI(
     **RailFleet Manager** - Complete Railway Fleet Management System
 
     **Features:**
+    - 🤖 **FLEET-ONE Agent**: LLM-based intelligent fleet management assistant (German)
     - 🚂 **Fleet Management**: Track locomotives, maintenance, and operations
     - 🔧 **Maintenance Management**: Schedule and track maintenance tasks and work orders
     - 🏭 **Workshop Management**: Manage workshops, capacity, and certifications
@@ -46,7 +47,7 @@ app = FastAPI(
     - 🚛 **Route Optimization**: CVRPTW solver with OR-Tools and Gurobi
     - 📅 **Workshop Scheduler**: OR-Tools CP-SAT based scheduling with constraints
 
-    **Integrated with FLEET-ONE Playbook for railway fleet operations**
+    **Powered by FLEET-ONE: Central AI agent with multi-mode routing and policy-based conflict resolution**
     """,
     version="2.1.0",
     docs_url="/docs",
@@ -84,6 +85,7 @@ app.include_router(sync_crdt.router, prefix="/api/v1", tags=["CRDT Synchronizati
 app.include_router(time_travel.router, prefix="/api/v1", tags=["Time-Travel & Audit"])
 app.include_router(ml.router, prefix="/api/v1", tags=["Machine Learning"])
 app.include_router(analytics.router, prefix="/api/v1", tags=["Analytics"])
+app.include_router(fleet_one.router, prefix="/api/v1", tags=["FLEET-ONE Agent"])
 
 # Include original CVRPTW solver routes
 app.include_router(solver_router, prefix="/api/v1/solver", tags=["Route Optimization"])
