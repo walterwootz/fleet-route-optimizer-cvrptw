@@ -20,6 +20,7 @@ from .inventory import Part, StockLocation, StockMove, UsedPart, RailwayClass, S
 from .procurement import Supplier, PurchaseOrder, PurchaseOrderLine, PurchaseOrderStatus
 from .finance import Invoice, InvoiceLine, Budget, CostCenter, InvoiceStatus
 from .events import Event, EventSnapshot
+from .crdt_metadata import CRDTMetadataModel, CRDTOperation
 
 __all__ = [
     "User",
