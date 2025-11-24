@@ -22,6 +22,7 @@ from .finance import Invoice, InvoiceLine, Budget, CostCenter, InvoiceStatus
 from .events import Event, EventSnapshot
 from .crdt_metadata import CRDTMetadataModel, CRDTOperation
 from .sync_device import SyncDevice, SyncSession
+from .ml_models import MLModel, MLPrediction
 
 __all__ = [
     "User",
@@ -70,4 +71,6 @@ __all__ = [
     "CRDTOperation",
     "SyncDevice",
     "SyncSession",
+    "MLModel",
+    "MLPrediction",
 ]
