@@ -19,6 +19,7 @@ from .event_log import EventLog
 from .inventory import Part, StockLocation, StockMove, UsedPart, RailwayClass, StockMoveType
 from .procurement import Supplier, PurchaseOrder, PurchaseOrderLine, PurchaseOrderStatus
 from .finance import Invoice, InvoiceLine, Budget, CostCenter, InvoiceStatus
+from .events import Event, EventSnapshot
 
 __all__ = [
     "User",
@@ -61,4 +62,6 @@ __all__ = [
     "Budget",
     "CostCenter",
     "InvoiceStatus",
+    "Event",
+    "EventSnapshot",
 ]
