@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .api import router as solver_router
 
 # RailFleet Manager routes
-from .api.v1.endpoints import auth, vehicles, maintenance, workshops, sync, scheduler, transfer, hr, docs, policy, parts, stock, procurement, finance, reports, events, projections, sync_crdt, time_travel, ml
+from .api.v1.endpoints import auth, vehicles, maintenance, workshops, sync, scheduler, transfer, hr, docs, policy, parts, stock, procurement, finance, reports, events, projections, sync_crdt, time_travel, ml, analytics
 
 # Database
 from .core.database import init_db
@@ -40,9 +40,10 @@ app = FastAPI(
     - 🛒 **Procurement**: Supplier management and purchase order workflow (DRAFT → CLOSED)
     - 💰 **Finance**: Invoice management, PO matching, and budget tracking with variance analysis
     - 📈 **Reporting & KPIs**: Availability, on-time ratio, parts usage, and cost reports
+    - 📊 **Advanced Analytics**: Real-time dashboards with KPIs, time series, and insights
     - 🔄 **Offline-First Sync**: Conflict detection and resolution for mobile/offline use
     - 🔐 **Authentication & Authorization**: Role-based access control (RBAC)
-    - 📊 **Route Optimization**: CVRPTW solver with OR-Tools and Gurobi
+    - 🚛 **Route Optimization**: CVRPTW solver with OR-Tools and Gurobi
     - 📅 **Workshop Scheduler**: OR-Tools CP-SAT based scheduling with constraints
 
     **Integrated with FLEET-ONE Playbook for railway fleet operations**
@@ -82,6 +83,7 @@ app.include_router(projections.router, prefix="/api/v1", tags=["Projections"])
 app.include_router(sync_crdt.router, prefix="/api/v1", tags=["CRDT Synchronization"])
 app.include_router(time_travel.router, prefix="/api/v1", tags=["Time-Travel & Audit"])
 app.include_router(ml.router, prefix="/api/v1", tags=["Machine Learning"])
+app.include_router(analytics.router, prefix="/api/v1", tags=["Analytics"])
 
 # Include original CVRPTW solver routes
 app.include_router(solver_router, prefix="/api/v1/solver", tags=["Route Optimization"])
@@ -106,6 +108,7 @@ def root():
             "Procurement & PO Management",
             "Finance & Budget Tracking",
             "Reporting & KPIs",
+            "Advanced Analytics Dashboard",
             "Offline-First Sync",
             "Route Optimization (CVRPTW)",
             "Workshop Scheduler (CP-SAT)",
