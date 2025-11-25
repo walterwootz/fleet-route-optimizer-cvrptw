@@ -3,7 +3,8 @@
  * Handles all HTTP communication with the FLEET-ONE backend
  */
 
-import axios, { AxiosInstance } from 'axios';
+import axios from 'axios';
+import type { AxiosInstance } from 'axios';
 import type {
   QueryRequest,
   QueryResponse,
