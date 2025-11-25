@@ -1,0 +1,67 @@
+{
+  "name": "FLEET-ONE",
+  "version": "1.0.0",
+  "updated_at": "2025-11-24T12:00:00Z",
+  "language": "de",
+  "timezone": "Europe/Berlin",
+  "description": "Ein einziger LLM-basierter Flottenmanagement-Agent",
+  "policy": {
+    "conflict_matrix": [
+      {
+        "field": "work_order.scheduled_start_end",
+        "authority": "dispatcher",
+        "resolver": "register-policy"
+      },
+      {
+        "field": "work_order.assigned_track_team",
+        "authority": "dispatcher",
+        "resolver": "register-policy"
+      },
+      {
+        "field": "work_order.priority",
+        "authority": "dispatcher",
+        "resolver": "register-policy"
+      },
+      {
+        "field": "work_order.status",
+        "authority": "workshop",
+        "resolver": "ts-last-writer(same-role)"
+      },
+      {
+        "field": "work_order.actual_start_end_ts",
+        "authority": "workshop",
+        "resolver": "register-authoritative"
+      },
+      {
+        "field": "work_order.used_parts",
+        "authority": "workshop",
+        "resolver": "append-only"
+      },
+      {
+        "field": "measurement.*",
+        "authority": "workshop/sensor",
+        "resolver": "append-only+is_primary"
+      },
+      {
+        "field": "finding.*",
+        "authority": "workshop",
+        "resolver": "append-only(gset)"
+      },
+      {
+        "field": "media.*",
+        "authority": "workshop",
+        "resolver": "append-only(gset)"
+      },
+      {
+        "field": "deadline.next_due_ts",
+        "authority": "dispatcher/system",
+        "resolver": "register-policy"
+      },
+      {
+        "field": "audit_event.*",
+        "authority": "system",
+        "resolver": "append-only"
+      }
+    ]
+  }
+}

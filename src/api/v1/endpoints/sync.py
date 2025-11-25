@@ -1,11 +1,12 @@
 """
-Sync endpoints for offline-first synchronization.
+Sync endpoints for offline-first synchronization (Enhanced WP8).
 """
-from fastapi import APIRouter, Depends, HTTPException, status, Header
+from fastapi import APIRouter, Depends, HTTPException, status, Header, Query
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Optional, List
 from src.core.database import get_db
 from src.services.railfleet.sync_service import SyncService
+from src.services.railfleet.enhanced_sync_service import EnhancedSyncService
 from src.api.schemas.sync import (
     SyncPushRequest,
     SyncPushResponse,
@@ -28,10 +29,12 @@ def push_events(
     current_user: User = Depends(get_current_user),
 ):
     """
-    Push offline changes to server.
+    Push offline changes to server (WP8 Enhanced).
 
     Client sends a list of events with field changes.
-    Server processes each event, applies changes, or flags conflicts.
+    Server processes each event, applies changes, logs to event_log, or flags conflicts.
+
+    **Supports:** work_order, vehicle, transfer_plan, staff, document, and more.
     """
     device_id = x_device_id or request.device_id
 
@@ -41,39 +44,58 @@ def push_events(
             detail="Device ID is required (X-Device-Id header or request.device_id)",
         )
 
-    sync_service = SyncService(db)
+    # Use enhanced sync service (WP8)
+    sync_service = EnhancedSyncService(db)
 
     # Process events
     result = sync_service.process_push_events(
         [event.model_dump() for event in request.events],
         device_id,
+        actor_id=current_user.id,
     )
 
     return SyncPushResponse(
         applied=result.get("applied", []),
         conflicts=result.get("conflicts", []),
         rejected=result.get("rejected", []),
-        next_cursor=f"log-idx-{len(result.get('applied', []))}",
+        next_cursor=result.get("next_cursor"),
     )
 
 
 @router.get("/pull", response_model=SyncPullResponse)
 def pull_events(
-    cursor: Optional[str] = None,
-    limit: int = 100,
+    cursor: Optional[str] = Query(None, description="Cursor in format 'log-{id}'"),
+    limit: int = Query(100, ge=1, le=1000, description="Max events to return"),
+    entity_types: Optional[str] = Query(None, description="Comma-separated entity types"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """
-    Pull server changes since cursor.
+    Pull server changes since cursor (WP8 Enhanced).
 
-    Returns events that happened on the server since the given cursor.
+    Returns events from event_log with cursor-based pagination.
+
+    **Cursor format:** `log-{id}` (e.g., `log-12345`)
+
+    **Entity types:** work_order, vehicle, transfer_plan, staff, document, etc.
     """
-    # In a real implementation, this would fetch events from an event log
-    # For now, return empty list
+    sync_service = EnhancedSyncService(db)
+
+    # Parse entity types
+    entity_types_list = None
+    if entity_types:
+        entity_types_list = [t.strip() for t in entity_types.split(",")]
+
+    result = sync_service.pull_events(
+        cursor=cursor,
+        limit=limit,
+        entity_types=entity_types_list,
+    )
+
     return SyncPullResponse(
-        events=[],
-        next_cursor=cursor,
+        events=result["events"],
+        next_cursor=result["next_cursor"],
+        has_more=result.get("has_more", False),
     )
 
 
@@ -142,3 +164,13 @@ def resolve_conflict(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+
+
+@router.get("/stats")
+def get_sync_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Get event log statistics (WP8)."""
+    sync_service = EnhancedSyncService(db)
+    return sync_service.get_event_log_stats()

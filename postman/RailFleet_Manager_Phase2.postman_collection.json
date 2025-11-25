@@ -1,0 +1,679 @@
+{
+	"info": {
+		"_postman_id": "railfleet-manager-phase2",
+		"name": "RailFleet Manager - Phase 2 MVP",
+		"description": "Complete API collection for RailFleet Manager Phase 2 with Inventory, Procurement, Finance, and Reporting features.\n\n**Demo Scenarios:**\n1. Inventory Flow: Part → PO → Receipt → Stock\n2. Procurement Flow: Supplier → PO → Workflow → Receipt\n3. Finance Flow: Invoice → Matching → Approval → Budget\n\n**Setup:**\n1. Import environment file\n2. Set {{base_url}} and credentials\n3. Run Authentication request first\n4. Token auto-updates via Pre-request Script",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{auth_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-refresh token if expired",
+					"const tokenExpiry = pm.environment.get('token_expiry');",
+					"const currentTime = new Date().getTime();",
+					"",
+					"if (!tokenExpiry || currentTime > tokenExpiry) {",
+					"    console.log('Token expired or missing, refreshing...');",
+					"    // Token will be refreshed by Authentication request",
+					"}"
+				]
+			}
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Save token to environment",
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('auth_token', response.access_token);",
+									"    ",
+									"    // Set expiry (30 minutes from now)",
+									"    const expiry = new Date().getTime() + (30 * 60 * 1000);",
+									"    pm.environment.set('token_expiry', expiry);",
+									"    ",
+									"    console.log('✅ Authentication successful');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "username",
+									"value": "{{username}}",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "{{password}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "login"]
+						},
+						"description": "Login to get authentication token. Token is automatically saved to environment."
+					}
+				}
+			]
+		},
+		{
+			"name": "Demo 1: Inventory Flow",
+			"item": [
+				{
+					"name": "1. Create Part",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const part = pm.response.json();",
+									"    pm.environment.set('part_id', part.id);",
+									"    pm.environment.set('part_no', part.part_no);",
+									"    console.log('✅ Part created:', part.part_no);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"part_no\": \"BRK-{{$timestamp}}\",\n  \"name\": \"Brake Pad Set - Demo\",\n  \"railway_class\": \"CRITICAL\",\n  \"unit\": \"set\",\n  \"min_stock\": 10,\n  \"current_stock\": 0,\n  \"unit_price\": 125.50,\n  \"is_active\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/parts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "parts"]
+						}
+					}
+				},
+				{
+					"name": "2. Create Stock Location",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const location = pm.response.json();",
+									"    pm.environment.set('location_id', location.id);",
+									"    console.log('✅ Location created:', location.location_code);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"location_code\": \"WS-{{$timestamp}}\",\n  \"name\": \"Demo Workshop Storage\",\n  \"location_type\": \"WORKSHOP\",\n  \"is_active\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/stock/locations",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "stock", "locations"]
+						}
+					}
+				},
+				{
+					"name": "3. Create Supplier",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const supplier = pm.response.json();",
+									"    pm.environment.set('supplier_id', supplier.id);",
+									"    console.log('✅ Supplier created:', supplier.supplier_code);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"supplier_code\": \"SUP-{{$timestamp}}\",\n  \"name\": \"Railway Parts GmbH - Demo\",\n  \"email\": \"demo@railparts.de\",\n  \"vat_id\": \"DE123456789\",\n  \"payment_terms\": \"NET30\",\n  \"is_active\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/suppliers",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "suppliers"]
+						}
+					}
+				},
+				{
+					"name": "4. Create Purchase Order",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const po = pm.response.json();",
+									"    pm.environment.set('po_id', po.id);",
+									"    pm.environment.set('po_line_id', po.lines[0].id);",
+									"    console.log('✅ PO created:', po.po_number, '- Status:', po.status);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"po_number\": \"PO-{{$timestamp}}\",\n  \"supplier_id\": \"{{supplier_id}}\",\n  \"expected_delivery_date\": \"{{$isoTimestamp}}\",\n  \"delivery_location_id\": \"{{location_id}}\",\n  \"lines\": [\n    {\n      \"line_number\": 1,\n      \"part_no\": \"{{part_no}}\",\n      \"quantity_ordered\": 50,\n      \"unit_price\": 125.50\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/purchase_orders",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "purchase_orders"]
+						}
+					}
+				},
+				{
+					"name": "5. Approve PO",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const po = pm.response.json();",
+									"    console.log('✅ PO approved - Status:', po.status);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"notes\": \"Demo approval\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/purchase_orders/{{po_id}}/approve",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "purchase_orders", "{{po_id}}", "approve"]
+						}
+					}
+				},
+				{
+					"name": "6. Order PO",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const po = pm.response.json();",
+									"    console.log('✅ PO ordered - Status:', po.status);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/purchase_orders/{{po_id}}/order",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "purchase_orders", "{{po_id}}", "order"]
+						}
+					}
+				},
+				{
+					"name": "7. Receive Goods (Creates Stock Moves)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const result = pm.response.json();",
+									"    console.log('✅ Goods received - Status:', result.status);",
+									"    console.log('   Stock Moves created:', result.stock_moves_created);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"delivery_location_id\": \"{{location_id}}\",\n  \"lines_received\": [\n    {\n      \"line_id\": \"{{po_line_id}}\",\n      \"quantity_received\": 50\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/purchase_orders/{{po_id}}/receive",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "purchase_orders", "{{po_id}}", "receive"]
+						}
+					}
+				},
+				{
+					"name": "8. Verify Stock Moves",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const result = pm.response.json();",
+									"    console.log('✅ Stock Moves found:', result.total);",
+									"    if (result.total > 0) {",
+									"        console.log('   Type:', result.moves[0].move_type);",
+									"        console.log('   Quantity:', result.moves[0].quantity);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/stock/moves?part_no={{part_no}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "stock", "moves"],
+							"query": [
+								{
+									"key": "part_no",
+									"value": "{{part_no}}"
+								}
+							]
+						}
+					}
+				}
+			],
+			"description": "Complete inventory workflow: Part → Location → Supplier → PO → Receive → Stock Moves"
+		},
+		{
+			"name": "Demo 2: Finance Flow",
+			"item": [
+				{
+					"name": "1. Create Budget",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const budget = pm.response.json();",
+									"    pm.environment.set('budget_id', budget.id);",
+									"    console.log('✅ Budget created for period:', budget.period);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"period\": \"{{$isoTimestamp}}\",\n  \"cost_center\": \"DEMO-WS-MAINT\",\n  \"category\": \"PARTS\",\n  \"planned_amount\": 10000,\n  \"forecast_amount\": 9500\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/budget",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "budget"]
+						}
+					}
+				},
+				{
+					"name": "2. Create Invoice",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const invoice = pm.response.json();",
+									"    pm.environment.set('invoice_id', invoice.id);",
+									"    console.log('✅ Invoice created:', invoice.invoice_number, '- Status:', invoice.status);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"invoice_number\": \"INV-{{$timestamp}}\",\n  \"supplier_id\": \"{{supplier_id}}\",\n  \"purchase_order_id\": \"{{po_id}}\",\n  \"invoice_date\": \"{{$isoTimestamp}}\",\n  \"due_date\": \"{{$isoTimestamp}}\",\n  \"lines\": [\n    {\n      \"line_number\": 1,\n      \"description\": \"Brake Pad Set - Demo\",\n      \"part_no\": \"{{part_no}}\",\n      \"quantity\": 50,\n      \"unit_price\": 125.50,\n      \"tax_amount\": 1191.75,\n      \"cost_center\": \"DEMO-WS-MAINT\"\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/invoices/inbox",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "invoices", "inbox"]
+						}
+					}
+				},
+				{
+					"name": "3. Match Invoice vs PO",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const result = pm.response.json();",
+									"    console.log('✅ Invoice matched');",
+									"    console.log('   Matched lines:', result.matched_lines);",
+									"    console.log('   Variance:', result.total_variance);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"purchase_order_id\": \"{{po_id}}\",\n  \"auto_allocate_cost\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/invoices/{{invoice_id}}/match",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "invoices", "{{invoice_id}}", "match"]
+						}
+					}
+				},
+				{
+					"name": "4. Approve Invoice (Updates Budget)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const invoice = pm.response.json();",
+									"    console.log('✅ Invoice approved - Status:', invoice.status);",
+									"    console.log('   Budget will be updated automatically');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"notes\": \"Demo approval\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/invoices/{{invoice_id}}/approve",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "invoices", "{{invoice_id}}", "approve"]
+						}
+					}
+				},
+				{
+					"name": "5. Verify Budget Updated",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const overview = pm.response.json();",
+									"    console.log('✅ Budget overview retrieved');",
+									"    console.log('   Total planned:', overview.total_planned);",
+									"    console.log('   Total actual:', overview.total_actual);",
+									"    console.log('   Variance:', overview.total_variance);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/budget/overview?period={{period}}&cost_center=DEMO-WS-MAINT",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "budget", "overview"],
+							"query": [
+								{
+									"key": "period",
+									"value": "{{period}}"
+								},
+								{
+									"key": "cost_center",
+									"value": "DEMO-WS-MAINT"
+								}
+							]
+						}
+					}
+				}
+			],
+			"description": "Complete finance workflow: Budget → Invoice → Match → Approve → Verify Budget Update"
+		},
+		{
+			"name": "Demo 3: Reports",
+			"item": [
+				{
+					"name": "Availability Report",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/reports/availability",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "reports", "availability"]
+						},
+						"description": "Vehicle availability by type"
+					}
+				},
+				{
+					"name": "On-Time Ratio",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/reports/on_time_ratio?period={{period}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "reports", "on_time_ratio"],
+							"query": [
+								{
+									"key": "period",
+									"value": "{{period}}"
+								}
+							]
+						},
+						"description": "Work order on-time performance"
+					}
+				},
+				{
+					"name": "Parts Usage",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/reports/parts_usage?period={{period}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "reports", "parts_usage"],
+							"query": [
+								{
+									"key": "period",
+									"value": "{{period}}"
+								}
+							]
+						},
+						"description": "Parts consumption analysis"
+					}
+				},
+				{
+					"name": "Cost Report",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/reports/costs?period={{period}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "reports", "costs"],
+							"query": [
+								{
+									"key": "period",
+									"value": "{{period}}"
+								}
+							]
+						},
+						"description": "Cost vs budget analysis"
+					}
+				},
+				{
+					"name": "Dashboard Summary",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/reports/dashboard?period={{period}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "reports", "dashboard"],
+							"query": [
+								{
+									"key": "period",
+									"value": "{{period}}"
+								}
+							]
+						},
+						"description": "Complete dashboard with all KPIs"
+					}
+				}
+			],
+			"description": "All reporting endpoints for KPIs and analytics"
+		}
+	]
+}

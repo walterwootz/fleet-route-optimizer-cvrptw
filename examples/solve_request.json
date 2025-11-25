@@ -1,0 +1,166 @@
+{
+  "problem": {
+    "name": "RailFleet Workshop Scheduling - Example",
+    "date": "2025-11-23",
+    "timezone": "Europe/Berlin",
+    "time_unit_min": 15,
+    "planning_horizon": {
+      "start": "2025-11-23T06:00:00Z",
+      "end": "2025-11-24T18:00:00Z"
+    }
+  },
+  "tracks": [
+    {
+      "id": "TRACK-MUC-01",
+      "name": "München Gleis 1",
+      "location": "MUNICH",
+      "capabilities": ["HU", "INSPECTION", "REPAIR"],
+      "availability": [
+        {
+          "start": "2025-11-23T06:00:00Z",
+          "end": "2025-11-23T22:00:00Z"
+        },
+        {
+          "start": "2025-11-24T06:00:00Z",
+          "end": "2025-11-24T18:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "TRACK-MUC-02",
+      "name": "München Gleis 2",
+      "location": "MUNICH",
+      "capabilities": ["HU", "INSPECTION", "ECM"],
+      "availability": [
+        {
+          "start": "2025-11-23T08:00:00Z",
+          "end": "2025-11-23T20:00:00Z"
+        }
+      ]
+    }
+  ],
+  "teams": [
+    {
+      "id": "TEAM-MUC-A",
+      "name": "Team Alpha München",
+      "skills": ["HU", "INSPECTION", "REPAIR"],
+      "shifts": [
+        {
+          "start": "2025-11-23T06:00:00Z",
+          "end": "2025-11-23T14:00:00Z"
+        },
+        {
+          "start": "2025-11-23T14:00:00Z",
+          "end": "2025-11-23T22:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "TEAM-MUC-B",
+      "name": "Team Bravo München",
+      "skills": ["HU", "ECM", "INSPECTION"],
+      "shifts": [
+        {
+          "start": "2025-11-23T08:00:00Z",
+          "end": "2025-11-23T16:00:00Z"
+        }
+      ]
+    }
+  ],
+  "parts": [
+    {
+      "part_no": "BRAKE-PAD-185",
+      "name": "Bremsbeläge 185er Serie",
+      "available_qty": 10,
+      "available_from": "2025-11-23T06:00:00Z"
+    },
+    {
+      "part_no": "FILTER-OIL-STD",
+      "name": "Ölfilter Standard",
+      "available_qty": 5,
+      "available_from": "2025-11-23T10:00:00Z"
+    },
+    {
+      "part_no": "WHEEL-BEARING-L",
+      "name": "Radreifen Lager",
+      "available_qty": 2,
+      "available_from": "2025-11-23T14:00:00Z"
+    }
+  ],
+  "work_orders": [
+    {
+      "id": "WO-2025-0101",
+      "asset_id": "185-123",
+      "asset_type": "BR185",
+      "type": "HU",
+      "priority": 10,
+      "duration_min": 240,
+      "required_skills": ["HU"],
+      "required_parts": [
+        {
+          "part_no": "BRAKE-PAD-185",
+          "qty": 2
+        },
+        {
+          "part_no": "FILTER-OIL-STD",
+          "qty": 1
+        }
+      ],
+      "earliest_start_ts": "2025-11-23T08:00:00Z",
+      "latest_end_ts": "2025-11-23T20:00:00Z",
+      "hard_deadline_ts": "2025-11-23T22:00:00Z",
+      "incompatible_assets": []
+    },
+    {
+      "id": "WO-2025-0102",
+      "asset_id": "185-456",
+      "asset_type": "BR185",
+      "type": "INSPECTION",
+      "priority": 5,
+      "duration_min": 120,
+      "required_skills": ["INSPECTION"],
+      "required_parts": [],
+      "earliest_start_ts": "2025-11-23T10:00:00Z",
+      "latest_end_ts": "2025-11-24T16:00:00Z",
+      "hard_deadline_ts": null,
+      "incompatible_assets": []
+    },
+    {
+      "id": "WO-2025-0103",
+      "asset_id": "185-789",
+      "asset_type": "BR185",
+      "type": "REPAIR",
+      "priority": 8,
+      "duration_min": 180,
+      "required_skills": ["REPAIR"],
+      "required_parts": [
+        {
+          "part_no": "WHEEL-BEARING-L",
+          "qty": 2
+        }
+      ],
+      "earliest_start_ts": "2025-11-23T06:00:00Z",
+      "latest_end_ts": "2025-11-24T12:00:00Z",
+      "hard_deadline_ts": "2025-11-24T18:00:00Z",
+      "incompatible_assets": ["185-123"]
+    }
+  ],
+  "objectives": {
+    "weights": {
+      "unscheduled": 1000,
+      "lateness_per_slot": 10,
+      "overtime_per_slot": 1
+    }
+  },
+  "constraints": {
+    "enforce_hard_deadlines": true,
+    "allow_overtime": false,
+    "require_skill_match": true,
+    "require_parts_available": true
+  },
+  "solver_config": {
+    "time_limit_sec": 60,
+    "num_workers": 4,
+    "log_search_progress": true
+  }
+}
