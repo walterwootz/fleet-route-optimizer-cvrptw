@@ -16,11 +16,10 @@ export function Layout({ children }: LayoutProps) {
     { name: 'Flotte', href: '/fleet', icon: Ship },
     { name: 'Wartung', href: '/maintenance', icon: Wrench },
     { name: 'Werkstatt', href: '/workshop', icon: Factory },
-    // Future pages:
-    // { name: 'Beschaffung', href: '/procurement', icon: ShoppingCart },
-    // { name: 'Finanzen', href: '/finance', icon: DollarSign },
-    // { name: 'Personal', href: '/hr', icon: Users },
-    // { name: 'Dokumente', href: '/documents', icon: FileText },
+    { name: 'Beschaffung', href: '/procurement', icon: ShoppingCart },
+    { name: 'Finanzen', href: '/finance', icon: DollarSign },
+    { name: 'Personal', href: '/hr', icon: Users },
+    { name: 'Dokumente', href: '/documents', icon: FileText },
   ];
 
   return (

@@ -10,6 +10,10 @@ import { Dashboard } from './pages/Dashboard';
 import { FleetOverview } from './pages/FleetOverview';
 import { Maintenance } from './pages/Maintenance';
 import { Workshop } from './pages/Workshop';
+import { Procurement } from './pages/Procurement';
+import { Finance } from './pages/Finance';
+import { HR } from './pages/HR';
+import { Documents } from './pages/Documents';
 import { FleetOneContainer } from './components/FleetOne/FleetOneContainer';
 import { useFleetOneStore } from './stores/fleetOneStore';
 
@@ -33,6 +37,10 @@ function App() {
           <Route path="/fleet" element={<FleetOverview />} />
           <Route path="/maintenance" element={<Maintenance />} />
           <Route path="/workshop" element={<Workshop />} />
+          <Route path="/procurement" element={<Procurement />} />
+          <Route path="/finance" element={<Finance />} />
+          <Route path="/hr" element={<HR />} />
+          <Route path="/documents" element={<Documents />} />
         </Routes>
       </Layout>
 
