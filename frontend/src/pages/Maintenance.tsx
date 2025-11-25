@@ -96,7 +96,7 @@ export function Maintenance() {
               <Calendar className="text-blue-600" size={24} />
             </div>
             <div>
-              <Text>Geplant (>7 Tage)</Text>
+              <Text>Geplant (&gt;7 Tage)</Text>
               <Title className="text-blue-600">{upcomingTasks}</Title>
             </div>
           </div>
