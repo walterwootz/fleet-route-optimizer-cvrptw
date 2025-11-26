@@ -3,59 +3,96 @@
  * Staff management and qualifications
  */
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, Title, Text, Badge, Table, TableHead, TableHeaderCell, TableBody, TableRow, TableCell, Select, SelectItem, Metric } from '@tremor/react';
-import { Users, CheckCircle, Clock, Award, AlertCircle } from 'lucide-react';
-
-// Mock data
-const mockStaff = [
-  { id: 'MA-123', name: 'Hans Müller', role: 'Mechaniker', qualifications: ['Schweißen', 'Hydraulik', 'Elektrik'], status: 'available', current_assignment: null, certificates_valid: true, next_training: '2025-03-15' },
-  { id: 'MA-456', name: 'Anna Schmidt', role: 'Mechaniker', qualifications: ['HU-Prüfer', 'Bremsen', 'Achsen'], status: 'available', current_assignment: null, certificates_valid: true, next_training: '2025-04-20' },
-  { id: 'MA-789', name: 'Peter Wagner', role: 'Elektriker', qualifications: ['Elektrik', 'Steuerung', 'Diagnose'], status: 'assigned', current_assignment: 'WO-12346', certificates_valid: true, next_training: '2025-02-10' },
-  { id: 'MA-234', name: 'Maria Fischer', role: 'Mechaniker', qualifications: ['Bremsen', 'Fahrwerk'], status: 'assigned', current_assignment: 'WO-12347', certificates_valid: true, next_training: '2025-05-01' },
-  { id: 'MA-345', name: 'Thomas Weber', role: 'Teamleiter', qualifications: ['HU-Prüfer', 'Schweißen', 'Hydraulik', 'Management'], status: 'available', current_assignment: null, certificates_valid: true, next_training: '2025-03-30' },
-  { id: 'MA-567', name: 'Julia Becker', role: 'Mechaniker', qualifications: ['Achslager', 'Getriebe'], status: 'available', current_assignment: null, certificates_valid: false, next_training: '2025-01-15' },
-  { id: 'MA-890', name: 'Michael Klein', role: 'Elektriker', qualifications: ['Elektrik', 'Klimaanlage'], status: 'assigned', current_assignment: 'WO-12350', certificates_valid: true, next_training: '2025-06-12' },
-  { id: 'MA-678', name: 'Sarah Hoffmann', role: 'Mechaniker', qualifications: ['Bremsen', 'Hydraulik', 'Ölwechsel'], status: 'training', current_assignment: null, certificates_valid: true, next_training: null },
-  { id: 'MA-901', name: 'Klaus Schneider', role: 'Teamleiter', qualifications: ['HU-Prüfer', 'Bremsen', 'Elektrik', 'Management'], status: 'available', current_assignment: null, certificates_valid: true, next_training: '2025-04-15' },
-  { id: 'MA-135', name: 'Claudia Zimmermann', role: 'Administrativ', qualifications: ['Planung', 'Dokumentation'], status: 'available', current_assignment: null, certificates_valid: true, next_training: '2025-07-01' },
-];
-
-// Mock training sessions
-const mockTrainingSessions = [
-  { id: 'TR-001', type: 'HU-Prüfer Auffrischung', date: '2025-01-15', participants: ['MA-567'], status: 'scheduled' },
-  { id: 'TR-002', type: 'Schweißtechnik Fortgeschritten', date: '2025-02-10', participants: ['MA-789'], status: 'scheduled' },
-  { id: 'TR-003', type: 'Neue Bremssysteme Schulung', date: '2025-03-05', participants: ['MA-234', 'MA-456', 'MA-678'], status: 'scheduled' },
-];
+import { Users, CheckCircle, Clock, Award, AlertCircle, Loader2 } from 'lucide-react';
+import { useHRStore } from '@/stores/hrStore';
 
 export function HR() {
+  const {
+    staff,
+    assignments,
+    loading,
+    error,
+    fetchStaff,
+    fetchAssignments,
+  } = useHRStore();
+
   const [statusFilter, setStatusFilter] = useState('all');
   const [roleFilter, setRoleFilter] = useState('all');
 
-  // Filter staff
-  const filteredStaff = mockStaff.filter((staff) => {
-    const matchesStatus = statusFilter === 'all' || staff.status === statusFilter;
-    const matchesRole = roleFilter === 'all' || staff.role === roleFilter;
-    return matchesStatus && matchesRole;
-  });
+  // Load data on mount
+  useEffect(() => {
+    fetchStaff({ is_active: true });
+    fetchAssignments();
+  }, [fetchStaff, fetchAssignments]);
 
-  // Get unique roles
-  const uniqueRoles = Array.from(new Set(mockStaff.map(s => s.role)));
+  // Create a map of staff ID to their current assignment
+  const staffAssignmentMap = useMemo(() => {
+    const map = new Map<string, string>();
+    assignments.forEach((assignment) => {
+      if (assignment.staff_id && assignment.vehicle_id) {
+        map.set(assignment.staff_id, assignment.vehicle_id);
+      }
+    });
+    return map;
+  }, [assignments]);
+
+  // Filter staff
+  const filteredStaff = useMemo(() => {
+    return staff.filter((s) => {
+      const matchesRole = roleFilter === 'all' || s.position === roleFilter;
+      const isAssigned = staffAssignmentMap.has(s.id);
+
+      // Status filter logic
+      let matchesStatus = true;
+      if (statusFilter === 'available') {
+        matchesStatus = !isAssigned;
+      } else if (statusFilter === 'assigned') {
+        matchesStatus = isAssigned;
+      }
+      // 'all' matches everything
+
+      return matchesRole && matchesStatus;
+    });
+  }, [staff, roleFilter, statusFilter, staffAssignmentMap]);
+
+  // Get unique positions/roles
+  const uniqueRoles = useMemo(() => {
+    return Array.from(new Set(staff.map(s => s.position)));
+  }, [staff]);
 
   // Calculate statistics
-  const totalStaff = mockStaff.length;
-  const availableStaff = mockStaff.filter(s => s.status === 'available').length;
-  const assignedStaff = mockStaff.filter(s => s.status === 'assigned').length;
-  const inTraining = mockStaff.filter(s => s.status === 'training').length;
-  const certificateIssues = mockStaff.filter(s => !s.certificates_valid).length;
+  const totalStaff = staff.filter(s => s.is_active).length;
+  const assignedStaff = useMemo(() => {
+    return staff.filter(s => staffAssignmentMap.has(s.id)).length;
+  }, [staff, staffAssignmentMap]);
+  const availableStaff = totalStaff - assignedStaff;
+
+  // Count certifications for issues (staff without certifications)
+  const certificateIssues = staff.filter(s => !s.certifications || s.certifications.length === 0).length;
 
   // Qualification distribution
-  const qualificationCounts = mockStaff.reduce((acc, staff) => {
-    staff.qualifications.forEach(qual => {
-      acc[qual] = (acc[qual] || 0) + 1;
-    });
-    return acc;
-  }, {} as Record<string, number>);
+  const qualificationCounts = useMemo(() => {
+    return staff.reduce((acc, s) => {
+      (s.qualifications || []).forEach(qual => {
+        acc[qual] = (acc[qual] || 0) + 1;
+      });
+      return acc;
+    }, {} as Record<string, number>);
+  }, [staff]);
+
+  // Loading state
+  if (loading && staff.length === 0) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <Loader2 className="animate-spin text-blue-600 mx-auto mb-4" size={48} />
+          <Text className="text-gray-600">Lade Mitarbeiterdaten...</Text>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -65,8 +102,21 @@ export function HR() {
         <Text>Mitarbeiter, Qualifikationen und Schulungen</Text>
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <Card className="border-l-4 border-red-500 bg-red-50">
+          <div className="flex items-start space-x-3">
+            <AlertCircle className="text-red-600 mt-1" size={20} />
+            <div>
+              <Title className="text-red-900">Fehler beim Laden</Title>
+              <Text className="text-red-700">{error}</Text>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <div className="flex items-center justify-between">
             <div>
@@ -109,22 +159,9 @@ export function HR() {
         <Card>
           <div className="flex items-center justify-between">
             <div>
-              <Text>In Schulung</Text>
-              <Metric className="text-orange-600">{inTraining}</Metric>
-              <Text className="text-xs text-gray-500 mt-1">Weiterbildung</Text>
-            </div>
-            <div className="p-3 bg-orange-100 rounded-lg">
-              <Award className="text-orange-600" size={20} />
-            </div>
-          </div>
-        </Card>
-
-        <Card>
-          <div className="flex items-center justify-between">
-            <div>
               <Text>Zertifikate</Text>
               <Metric className="text-red-600">{certificateIssues}</Metric>
-              <Text className="text-xs text-gray-500 mt-1">Probleme</Text>
+              <Text className="text-xs text-gray-500 mt-1">Ohne Zertifikate</Text>
             </div>
             <div className="p-3 bg-red-100 rounded-lg">
               <AlertCircle className="text-red-600" size={20} />
@@ -147,7 +184,6 @@ export function HR() {
                   <SelectItem value="all">Alle Status</SelectItem>
                   <SelectItem value="available">Verfügbar</SelectItem>
                   <SelectItem value="assigned">Zugewiesen</SelectItem>
-                  <SelectItem value="training">In Schulung</SelectItem>
                 </Select>
                 <Select value={roleFilter} onValueChange={setRoleFilter} className="w-40">
                   <SelectItem value="all">Alle Rollen</SelectItem>
@@ -173,55 +209,67 @@ export function HR() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredStaff.map((staff) => (
-                  <TableRow key={staff.id}>
-                    <TableCell>
-                      <span className="font-mono text-sm">{staff.id}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-medium">{staff.name}</span>
-                    </TableCell>
-                    <TableCell>{staff.role}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {staff.qualifications.slice(0, 3).map((qual, idx) => (
-                          <Badge key={idx} size="xs" color="blue">
-                            {qual}
-                          </Badge>
-                        ))}
-                        {staff.qualifications.length > 3 && (
-                          <Badge size="xs" color="gray">
-                            +{staff.qualifications.length - 3}
-                          </Badge>
+                {filteredStaff.map((s) => {
+                  const currentAssignment = staffAssignmentMap.get(s.id);
+                  const isAssigned = !!currentAssignment;
+                  const qualifications = s.qualifications || [];
+                  const certifications = s.certifications || [];
+
+                  return (
+                    <TableRow key={s.id}>
+                      <TableCell>
+                        <span className="font-mono text-sm">{s.employee_id}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-medium">{s.first_name} {s.last_name}</span>
+                      </TableCell>
+                      <TableCell>{s.position}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {qualifications.slice(0, 3).map((qual, idx) => (
+                            <Badge key={idx} size="xs" color="blue">
+                              {qual}
+                            </Badge>
+                          ))}
+                          {qualifications.length > 3 && (
+                            <Badge size="xs" color="gray">
+                              +{qualifications.length - 3}
+                            </Badge>
+                          )}
+                          {qualifications.length === 0 && (
+                            <Text className="text-xs text-gray-500">Keine</Text>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <StaffStatusBadge isAssigned={isAssigned} />
+                      </TableCell>
+                      <TableCell>
+                        {currentAssignment ? (
+                          <span className="font-mono text-sm">{currentAssignment}</span>
+                        ) : (
+                          <Badge color="gray">Keine</Badge>
                         )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <StaffStatusBadge status={staff.status} />
-                    </TableCell>
-                    <TableCell>
-                      {staff.current_assignment ? (
-                        <span className="font-mono text-sm">{staff.current_assignment}</span>
-                      ) : (
-                        <Badge color="gray">Keine</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {staff.certificates_valid ? (
-                        <Badge color="green">Gültig</Badge>
-                      ) : (
-                        <Badge color="red">Abgelaufen</Badge>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                      <TableCell>
+                        {certifications.length > 0 ? (
+                          <Badge color="green">{certifications.length} Zertifikate</Badge>
+                        ) : (
+                          <Badge color="red">Keine</Badge>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
 
-            {filteredStaff.length === 0 && (
+            {filteredStaff.length === 0 && !loading && (
               <div className="text-center py-8">
                 <Text className="text-gray-500">
-                  Keine Mitarbeiter gefunden. Passen Sie die Filter an.
+                  {staff.length === 0
+                    ? 'Keine Mitarbeiter vorhanden.'
+                    : 'Keine Mitarbeiter gefunden. Passen Sie die Filter an.'}
                 </Text>
               </div>
             )}
@@ -252,31 +300,31 @@ export function HR() {
                     </div>
                   </div>
                 ))}
+              {Object.keys(qualificationCounts).length === 0 && (
+                <Text className="text-gray-500 text-center py-4">Keine Qualifikationen erfasst.</Text>
+              )}
             </div>
           </Card>
 
-          {/* Upcoming Training */}
+          {/* Department Distribution */}
           <Card>
-            <Title>Geplante Schulungen</Title>
-            <Text className="mb-4">{mockTrainingSessions.length} Termine</Text>
-            <div className="space-y-3">
-              {mockTrainingSessions.map((session) => (
-                <div key={session.id} className="border-l-4 border-blue-500 pl-3 py-2">
-                  <div className="font-medium text-sm">{session.type}</div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {new Date(session.date).toLocaleDateString('de-DE', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric',
-                    })}
-                  </div>
-                  <div className="mt-2">
-                    <Badge size="xs" color="blue">
-                      {session.participants.length} Teilnehmer
-                    </Badge>
-                  </div>
-                </div>
-              ))}
+            <Title>Abteilungen</Title>
+            <Text className="mb-4">Personal-Übersicht</Text>
+            <div className="space-y-2">
+              {Array.from(new Set(staff.map(s => s.department)))
+                .filter(dept => dept)
+                .map((department) => {
+                  const count = staff.filter(s => s.department === department).length;
+                  return (
+                    <div key={department} className="flex items-center justify-between py-2 border-b border-gray-100">
+                      <Text className="text-sm font-medium">{department}</Text>
+                      <Badge color="blue">{count} Mitarbeiter</Badge>
+                    </div>
+                  );
+                })}
+              {Array.from(new Set(staff.map(s => s.department))).filter(d => d).length === 0 && (
+                <Text className="text-gray-500 text-center py-4">Keine Abteilungen erfasst.</Text>
+              )}
             </div>
           </Card>
         </div>
@@ -286,14 +334,10 @@ export function HR() {
 }
 
 // Helper component for staff status badges
-function StaffStatusBadge({ status }: { status: string }) {
-  const statusConfig: Record<string, { label: string; color: 'green' | 'blue' | 'orange' | 'gray' }> = {
-    available: { label: 'Verfügbar', color: 'green' },
-    assigned: { label: 'Zugewiesen', color: 'blue' },
-    training: { label: 'In Schulung', color: 'orange' },
-  };
-
-  const config = statusConfig[status] || { label: status, color: 'gray' };
-
-  return <Badge color={config.color}>{config.label}</Badge>;
+function StaffStatusBadge({ isAssigned }: { isAssigned: boolean }) {
+  return isAssigned ? (
+    <Badge color="blue">Zugewiesen</Badge>
+  ) : (
+    <Badge color="green">Verfügbar</Badge>
+  );
 }

@@ -1,252 +1,261 @@
 /**
  * Procurement Page
- * Parts inventory and purchase requests
+ * Purchase orders and supplier management
  */
 
-import { useState } from 'react';
-import { Card, Title, Text, Badge, Table, TableHead, TableHeaderCell, TableBody, TableRow, TableCell, Select, SelectItem, Metric, ProgressBar } from '@tremor/react';
-import { Package, ShoppingCart, AlertTriangle, CheckCircle } from 'lucide-react';
-
-// Mock data
-const mockStock = [
-  { part_no: 'P-45678', description: 'Bremsscheibe 330mm', available: 12, reserved: 5, free: 7, reorder_level: 20, status: 'low' },
-  { part_no: 'P-99999', description: 'Luftfilter Standard', available: 0, reserved: 0, free: 0, reorder_level: 10, status: 'critical' },
-  { part_no: 'P-12345', description: 'Ölfilter Diesel', available: 45, reserved: 8, free: 37, reorder_level: 15, status: 'ok' },
-  { part_no: 'P-67890', description: 'Kupplungssatz', available: 8, reserved: 2, free: 6, reorder_level: 5, status: 'ok' },
-  { part_no: 'P-11111', description: 'Achslager 200mm', available: 3, reserved: 3, free: 0, reorder_level: 8, status: 'critical' },
-  { part_no: 'P-22222', description: 'Bremsbeläge Vorderachse', available: 18, reserved: 4, free: 14, reorder_level: 12, status: 'ok' },
-  { part_no: 'P-33333', description: 'Dichtungssatz Motor', available: 25, reserved: 0, free: 25, reorder_level: 10, status: 'ok' },
-  { part_no: 'P-44444', description: 'Kühlflüssigkeit 20L', available: 6, reserved: 2, free: 4, reorder_level: 15, status: 'low' },
-];
-
-const mockPurchaseRequests = [
-  { id: 'PR-6789', part_no: 'P-45678', description: 'Bremsscheibe 330mm', qty: 50, needed_by: '2025-12-15', status: 'pending', related_wo: 'WO-12345' },
-  { id: 'PR-6790', part_no: 'P-99999', description: 'Luftfilter Standard', qty: 20, needed_by: '2025-11-30', status: 'approved', related_wo: 'WO-12346' },
-  { id: 'PR-6791', part_no: 'P-11111', description: 'Achslager 200mm', qty: 10, needed_by: '2025-12-05', status: 'ordered', related_wo: 'WO-12347' },
-  { id: 'PR-6792', part_no: 'P-44444', description: 'Kühlflüssigkeit 20L', qty: 30, needed_by: '2025-12-10', status: 'pending', related_wo: null },
-  { id: 'PR-6793', part_no: 'P-12345', description: 'Ölfilter Diesel', qty: 40, needed_by: '2025-12-20', status: 'delivered', related_wo: 'WO-12348' },
-];
+import { useEffect, useMemo } from 'react';
+import { Card, Title, Text, Badge, Table, TableHead, TableHeaderCell, TableBody, TableRow, TableCell, Select, SelectItem, Metric } from '@tremor/react';
+import { Package, ShoppingCart, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
+import { useProcurementStore } from '@/stores/procurementStore';
+import { PurchaseOrderStatus } from '@/services/procurementApi';
 
 export function Procurement() {
-  const [stockFilter, setStockFilter] = useState('all');
-  const [requestFilter, setRequestFilter] = useState('all');
+  const {
+    purchaseOrders,
+    suppliers,
+    loading,
+    error,
+    statusFilter,
+    setStatusFilter,
+    fetchPurchaseOrders,
+    fetchSuppliers,
+  } = useProcurementStore();
 
-  // Filter stock
-  const filteredStock = mockStock.filter((item) => {
-    if (stockFilter === 'all') return true;
-    return item.status === stockFilter;
-  });
+  // Load data on mount
+  useEffect(() => {
+    fetchPurchaseOrders();
+    fetchSuppliers({ is_active: true });
+  }, [fetchPurchaseOrders, fetchSuppliers]);
 
-  // Filter requests
-  const filteredRequests = mockPurchaseRequests.filter((req) => {
-    if (requestFilter === 'all') return true;
-    return req.status === requestFilter;
-  });
+  // Filter purchase orders
+  const filteredOrders = useMemo(() => {
+    return purchaseOrders.filter((po) => {
+      const matchesStatus = statusFilter === 'all' || po.status === statusFilter;
+      return matchesStatus;
+    });
+  }, [purchaseOrders, statusFilter]);
+
+  // Get supplier name by ID
+  const getSupplierName = (supplierId: string): string => {
+    const supplier = suppliers.find(s => s.id === supplierId);
+    return supplier ? supplier.name : supplierId;
+  };
 
   // Calculate statistics
-  const totalParts = mockStock.length;
-  const criticalParts = mockStock.filter(s => s.status === 'critical').length;
-  const lowParts = mockStock.filter(s => s.status === 'low').length;
-  const okParts = mockStock.filter(s => s.status === 'ok').length;
+  const totalOrders = purchaseOrders.length;
+  const draftOrders = purchaseOrders.filter(po => po.status === PurchaseOrderStatus.DRAFT).length;
+  const approvedOrders = purchaseOrders.filter(po => po.status === PurchaseOrderStatus.APPROVED).length;
+  const orderedOrders = purchaseOrders.filter(po => po.status === PurchaseOrderStatus.ORDERED).length;
+  const receivedOrders = purchaseOrders.filter(po => po.status === PurchaseOrderStatus.RECEIVED).length;
 
-  const totalRequests = mockPurchaseRequests.length;
-  const pendingRequests = mockPurchaseRequests.filter(r => r.status === 'pending').length;
-  const approvedRequests = mockPurchaseRequests.filter(r => r.status === 'approved').length;
+  // Calculate total value
+  const totalValue = purchaseOrders.reduce((sum, po) => sum + po.total_amount, 0);
 
-  // Calculate total inventory value (mock)
-  const totalValue = 125000;
-  const monthlySpend = 18500;
+  // Loading state
+  if (loading && purchaseOrders.length === 0) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <Loader2 className="animate-spin text-blue-600 mx-auto mb-4" size={48} />
+          <Text className="text-gray-600">Lade Bestellungen...</Text>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
       <div>
         <Title>Beschaffung</Title>
-        <Text>Teile-Lager und Bestellungen</Text>
+        <Text>Bestellungen und Lieferanten</Text>
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <Card className="border-l-4 border-red-500 bg-red-50">
+          <div className="flex items-start space-x-3">
+            <AlertTriangle className="text-red-600 mt-1" size={20} />
+            <div>
+              <Title className="text-red-900">Fehler beim Laden</Title>
+              <Text className="text-red-700">{error}</Text>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
-          <Text>Lagerwert</Text>
+          <Text>Gesamtwert</Text>
           <Metric>€{totalValue.toLocaleString('de-DE')}</Metric>
-          <Text className="text-gray-500 text-xs mt-1">{totalParts} Teile</Text>
+          <Text className="text-gray-500 text-xs mt-1">{totalOrders} Bestellungen</Text>
         </Card>
 
         <Card>
-          <div className="flex items-center justify-between">
-            <div>
-              <Text>Kritischer Bestand</Text>
-              <Metric className="text-red-600">{criticalParts}</Metric>
+          <div className="flex items-center space-x-3">
+            <div className="p-3 bg-gray-100 rounded-lg">
+              <Package className="text-gray-600" size={20} />
             </div>
-            <div className="p-3 bg-red-100 rounded-lg">
-              <AlertTriangle className="text-red-600" size={20} />
+            <div>
+              <Text>Entwurf</Text>
+              <Metric className="text-gray-600">{draftOrders}</Metric>
             </div>
           </div>
         </Card>
 
         <Card>
-          <div className="flex items-center justify-between">
-            <div>
-              <Text>Niedriger Bestand</Text>
-              <Metric className="text-orange-600">{lowParts}</Metric>
+          <div className="flex items-center space-x-3">
+            <div className="p-3 bg-green-100 rounded-lg">
+              <CheckCircle className="text-green-600" size={20} />
             </div>
-            <div className="p-3 bg-orange-100 rounded-lg">
-              <Package className="text-orange-600" size={20} />
+            <div>
+              <Text>Genehmigt</Text>
+              <Metric className="text-green-600">{approvedOrders}</Metric>
             </div>
           </div>
         </Card>
 
         <Card>
-          <div className="flex items-center justify-between">
-            <div>
-              <Text>Monatl. Ausgaben</Text>
-              <Metric>€{monthlySpend.toLocaleString('de-DE')}</Metric>
-            </div>
+          <div className="flex items-center space-x-3">
             <div className="p-3 bg-blue-100 rounded-lg">
               <ShoppingCart className="text-blue-600" size={20} />
             </div>
+            <div>
+              <Text>Bestellt</Text>
+              <Metric className="text-blue-600">{orderedOrders}</Metric>
+            </div>
+          </div>
+        </Card>
+
+        <Card>
+          <div className="flex items-center space-x-3">
+            <div className="p-3 bg-purple-100 rounded-lg">
+              <Package className="text-purple-600" size={20} />
+            </div>
+            <div>
+              <Text>Erhalten</Text>
+              <Metric className="text-purple-600">{receivedOrders}</Metric>
+            </div>
           </div>
         </Card>
       </div>
 
-      {/* Stock Table */}
+      {/* Filters */}
       <Card>
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <Title>Lagerbestand</Title>
-            <Text>{filteredStock.length} von {totalParts} Teilen</Text>
-          </div>
-          <Select value={stockFilter} onValueChange={setStockFilter} className="w-48">
-            <SelectItem value="all">Alle Teile</SelectItem>
-            <SelectItem value="critical">Kritisch</SelectItem>
-            <SelectItem value="low">Niedrig</SelectItem>
-            <SelectItem value="ok">OK</SelectItem>
-          </Select>
-        </div>
-
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableHeaderCell>Teil-Nr.</TableHeaderCell>
-              <TableHeaderCell>Beschreibung</TableHeaderCell>
-              <TableHeaderCell>Verfügbar</TableHeaderCell>
-              <TableHeaderCell>Reserviert</TableHeaderCell>
-              <TableHeaderCell>Frei</TableHeaderCell>
-              <TableHeaderCell>Mindestbestand</TableHeaderCell>
-              <TableHeaderCell>Status</TableHeaderCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredStock.map((item) => (
-              <TableRow key={item.part_no}>
-                <TableCell>
-                  <span className="font-mono font-medium">{item.part_no}</span>
-                </TableCell>
-                <TableCell>{item.description}</TableCell>
-                <TableCell>{item.available}</TableCell>
-                <TableCell>{item.reserved}</TableCell>
-                <TableCell>
-                  <span className={item.free === 0 ? 'text-red-600 font-medium' : ''}>
-                    {item.free}
-                  </span>
-                </TableCell>
-                <TableCell>{item.reorder_level}</TableCell>
-                <TableCell>
-                  <StockStatusBadge status={item.status} free={item.free} reorder={item.reorder_level} />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as PurchaseOrderStatus | 'all')}>
+          <SelectItem value="all">Alle Status</SelectItem>
+          <SelectItem value={PurchaseOrderStatus.DRAFT}>Entwurf</SelectItem>
+          <SelectItem value={PurchaseOrderStatus.APPROVED}>Genehmigt</SelectItem>
+          <SelectItem value={PurchaseOrderStatus.ORDERED}>Bestellt</SelectItem>
+          <SelectItem value={PurchaseOrderStatus.RECEIVED}>Erhalten</SelectItem>
+          <SelectItem value={PurchaseOrderStatus.CLOSED}>Abgeschlossen</SelectItem>
+          <SelectItem value={PurchaseOrderStatus.CANCELLED}>Storniert</SelectItem>
+        </Select>
       </Card>
 
-      {/* Purchase Requests */}
+      {/* Purchase Orders Table */}
       <Card>
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <Title>Bestellanforderungen</Title>
-            <Text>{filteredRequests.length} Anfragen</Text>
-          </div>
-          <Select value={requestFilter} onValueChange={setRequestFilter} className="w-48">
-            <SelectItem value="all">Alle Status</SelectItem>
-            <SelectItem value="pending">Ausstehend</SelectItem>
-            <SelectItem value="approved">Genehmigt</SelectItem>
-            <SelectItem value="ordered">Bestellt</SelectItem>
-            <SelectItem value="delivered">Geliefert</SelectItem>
-          </Select>
-        </div>
-
         <Table>
           <TableHead>
             <TableRow>
-              <TableHeaderCell>PR-Nummer</TableHeaderCell>
-              <TableHeaderCell>Teil</TableHeaderCell>
-              <TableHeaderCell>Menge</TableHeaderCell>
-              <TableHeaderCell>Benötigt bis</TableHeaderCell>
+              <TableHeaderCell>Bestellnummer</TableHeaderCell>
+              <TableHeaderCell>Lieferant</TableHeaderCell>
               <TableHeaderCell>Status</TableHeaderCell>
-              <TableHeaderCell>Zugeordnet</TableHeaderCell>
+              <TableHeaderCell>Bestelldatum</TableHeaderCell>
+              <TableHeaderCell>Lieferdatum</TableHeaderCell>
+              <TableHeaderCell>Positionen</TableHeaderCell>
+              <TableHeaderCell>Gesamtbetrag</TableHeaderCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredRequests.map((req) => (
-              <TableRow key={req.id}>
+            {filteredOrders.map((po) => (
+              <TableRow key={po.id}>
                 <TableCell>
-                  <span className="font-mono font-medium">{req.id}</span>
+                  <span className="font-mono font-medium">{po.po_number}</span>
                 </TableCell>
                 <TableCell>
-                  <div>
-                    <div className="font-mono text-xs text-gray-500">{req.part_no}</div>
-                    <div className="text-sm">{req.description}</div>
-                  </div>
-                </TableCell>
-                <TableCell>{req.qty} Stück</TableCell>
-                <TableCell>
-                  {new Date(req.needed_by).toLocaleDateString('de-DE')}
+                  <Text>{getSupplierName(po.supplier_id)}</Text>
                 </TableCell>
                 <TableCell>
-                  <RequestStatusBadge status={req.status} />
+                  <StatusBadge status={po.status} />
                 </TableCell>
                 <TableCell>
-                  {req.related_wo ? (
-                    <span className="font-mono text-sm">{req.related_wo}</span>
+                  {po.order_date ? (
+                    <Text className="text-xs">
+                      {new Date(po.order_date).toLocaleDateString('de-DE')}
+                    </Text>
                   ) : (
-                    <Badge color="gray">Kein WO</Badge>
+                    <Text className="text-xs text-gray-500">-</Text>
                   )}
+                </TableCell>
+                <TableCell>
+                  {po.expected_delivery_date ? (
+                    <Text className="text-xs">
+                      {new Date(po.expected_delivery_date).toLocaleDateString('de-DE')}
+                    </Text>
+                  ) : (
+                    <Text className="text-xs text-gray-500">-</Text>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Badge color="blue">{po.lines.length} Positionen</Badge>
+                </TableCell>
+                <TableCell>
+                  <Text className="font-medium">
+                    €{po.total_amount.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </Text>
+                  <Text className="text-xs text-gray-500">{po.currency}</Text>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
+
+        {filteredOrders.length === 0 && !loading && (
+          <div className="text-center py-8">
+            <Text className="text-gray-500">
+              {purchaseOrders.length === 0
+                ? 'Keine Bestellungen vorhanden. Erstellen Sie eine neue Bestellung.'
+                : 'Keine Bestellungen gefunden. Passen Sie die Filter an.'}
+            </Text>
+          </div>
+        )}
+      </Card>
+
+      {/* Suppliers Overview */}
+      <Card>
+        <Title>Aktive Lieferanten</Title>
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+          {suppliers.slice(0, 6).map((supplier) => (
+            <div key={supplier.id} className="p-4 bg-gray-50 rounded-lg">
+              <Text className="font-medium">{supplier.name}</Text>
+              <Text className="text-xs text-gray-500">{supplier.supplier_code}</Text>
+              {supplier.payment_terms && (
+                <Badge size="xs" color="gray" className="mt-2">
+                  {supplier.payment_terms}
+                </Badge>
+              )}
+            </div>
+          ))}
+        </div>
+        {suppliers.length === 0 && !loading && (
+          <Text className="text-gray-500 text-center py-4">Keine Lieferanten vorhanden.</Text>
+        )}
       </Card>
     </div>
   );
 }
 
-// Helper component for stock status badges
-function StockStatusBadge({ status, free, reorder }: { status: string; free: number; reorder: number }) {
-  if (free === 0) {
-    return <Badge color="red">Leer</Badge>;
-  }
-
-  const statusConfig: Record<string, { label: string; color: 'red' | 'orange' | 'green' | 'gray' }> = {
-    critical: { label: 'Kritisch', color: 'red' },
-    low: { label: 'Niedrig', color: 'orange' },
-    ok: { label: 'OK', color: 'green' },
-  };
-
-  const config = statusConfig[status] || { label: status, color: 'gray' };
-
-  return <Badge color={config.color}>{config.label}</Badge>;
-}
-
-// Helper component for request status badges
-function RequestStatusBadge({ status }: { status: string }) {
-  const statusConfig: Record<string, { label: string; color: 'yellow' | 'blue' | 'purple' | 'green' | 'gray' }> = {
-    pending: { label: 'Ausstehend', color: 'yellow' },
-    approved: { label: 'Genehmigt', color: 'blue' },
-    ordered: { label: 'Bestellt', color: 'purple' },
-    delivered: { label: 'Geliefert', color: 'green' },
+// Helper component for status badges
+function StatusBadge({ status }: { status: PurchaseOrderStatus }) {
+  const statusConfig: Record<PurchaseOrderStatus, { label: string; color: 'blue' | 'orange' | 'green' | 'red' | 'gray' | 'purple' }> = {
+    [PurchaseOrderStatus.DRAFT]: { label: 'Entwurf', color: 'gray' },
+    [PurchaseOrderStatus.APPROVED]: { label: 'Genehmigt', color: 'green' },
+    [PurchaseOrderStatus.ORDERED]: { label: 'Bestellt', color: 'blue' },
+    [PurchaseOrderStatus.RECEIVED]: { label: 'Erhalten', color: 'purple' },
+    [PurchaseOrderStatus.CLOSED]: { label: 'Abgeschlossen', color: 'gray' },
+    [PurchaseOrderStatus.CANCELLED]: { label: 'Storniert', color: 'red' },
   };
 
   const config = statusConfig[status] || { label: status, color: 'gray' };
