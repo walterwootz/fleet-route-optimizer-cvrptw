@@ -3,111 +3,84 @@
  * Overview of workshop orders and progress
  */
 
-import { useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Card, Title, Text, Badge, Table, TableHead, TableHeaderCell, TableBody, TableRow, TableCell, ProgressBar, Select, SelectItem } from '@tremor/react';
-import { Factory, CheckCircle, Clock, AlertCircle } from 'lucide-react';
-
-// Mock data - will be replaced with API calls
-const mockWorkshopOrders = [
-  {
-    id: 'WO-12345',
-    locomotive_id: 'BR185-042',
-    workshop_id: 'WERK-MUC',
-    workshop_name: 'München',
-    status: 'planned',
-    planned_start: '2025-12-05T08:00:00',
-    planned_end: '2025-12-06T16:00:00',
-    tasks: ['HU', 'Bremsprüfung', 'Ölwechsel'],
-    assigned_staff: ['MA-123', 'MA-456'],
-    progress: 0,
-  },
-  {
-    id: 'WO-12346',
-    locomotive_id: 'BR189-033',
-    workshop_id: 'WERK-MUC',
-    workshop_name: 'München',
-    status: 'in_progress',
-    planned_start: '2025-11-20T08:00:00',
-    planned_end: '2025-11-22T16:00:00',
-    actual_start: '2025-11-20T08:15:00',
-    tasks: ['HU', 'Klimaanlage'],
-    assigned_staff: ['MA-789'],
-    progress: 65,
-  },
-  {
-    id: 'WO-12347',
-    locomotive_id: 'BR152-123',
-    workshop_id: 'WERK-LEI',
-    workshop_name: 'Leipzig',
-    status: 'in_progress',
-    planned_start: '2025-11-22T08:00:00',
-    planned_end: '2025-11-23T16:00:00',
-    actual_start: '2025-11-22T08:00:00',
-    tasks: ['Bremsprüfung'],
-    assigned_staff: ['MA-234'],
-    progress: 40,
-  },
-  {
-    id: 'WO-12348',
-    locomotive_id: 'BR185-091',
-    workshop_id: 'WERK-HAM',
-    workshop_name: 'Hamburg',
-    status: 'completed',
-    planned_start: '2025-11-15T08:00:00',
-    planned_end: '2025-11-17T16:00:00',
-    actual_start: '2025-11-15T08:00:00',
-    actual_end: '2025-11-17T15:30:00',
-    tasks: ['HU', 'Bremsprüfung', 'Ölwechsel', 'Achslager'],
-    assigned_staff: ['MA-345', 'MA-567'],
-    progress: 100,
-  },
-  {
-    id: 'WO-12349',
-    locomotive_id: 'BR189-012',
-    workshop_id: 'WERK-BER',
-    workshop_name: 'Berlin',
-    status: 'planned',
-    planned_start: '2025-12-10T08:00:00',
-    planned_end: '2025-12-11T16:00:00',
-    tasks: ['Ölwechsel', 'Filter'],
-    assigned_staff: [],
-    progress: 0,
-  },
-  {
-    id: 'WO-12350',
-    locomotive_id: 'BR152-156',
-    workshop_id: 'WERK-MUC',
-    workshop_name: 'München',
-    status: 'delayed',
-    planned_start: '2025-11-18T08:00:00',
-    planned_end: '2025-11-20T16:00:00',
-    actual_start: '2025-11-18T10:30:00',
-    tasks: ['HU', 'Getriebe'],
-    assigned_staff: ['MA-890'],
-    progress: 25,
-  },
-];
+import { Factory, CheckCircle, Clock, AlertCircle, Loader2 } from 'lucide-react';
+import { useMaintenanceStore } from '@/stores/maintenanceStore';
+import { WorkOrderStatus } from '@/services/maintenanceApi';
 
 export function Workshop() {
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [workshopFilter, setWorkshopFilter] = useState('all');
+  // Get state and actions from store
+  const {
+    workOrders,
+    loading,
+    error,
+    statusFilter,
+    workshopFilter,
+    setStatusFilter,
+    setWorkshopFilter,
+    fetchWorkOrders,
+  } = useMaintenanceStore();
 
-  // Filter orders
-  const filteredOrders = mockWorkshopOrders.filter((order) => {
-    const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-    const matchesWorkshop = workshopFilter === 'all' || order.workshop_id === workshopFilter;
-    return matchesStatus && matchesWorkshop;
-  });
+  // Load work orders on mount
+  useEffect(() => {
+    fetchWorkOrders();
+  }, [fetchWorkOrders]);
+
+  // Filter orders based on selected filters
+  const filteredOrders = useMemo(() => {
+    return workOrders.filter((order) => {
+      const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
+      const matchesWorkshop = workshopFilter === 'all' || order.workshop_id === workshopFilter;
+      return matchesStatus && matchesWorkshop;
+    });
+  }, [workOrders, statusFilter, workshopFilter]);
 
   // Get unique workshops
-  const uniqueWorkshops = Array.from(new Set(mockWorkshopOrders.map(o => o.workshop_id)));
+  const uniqueWorkshops = useMemo(() => {
+    return Array.from(new Set(workOrders.map(o => o.workshop_id).filter(Boolean)));
+  }, [workOrders]);
 
   // Calculate statistics
-  const totalOrders = mockWorkshopOrders.length;
-  const plannedOrders = mockWorkshopOrders.filter(o => o.status === 'planned').length;
-  const inProgressOrders = mockWorkshopOrders.filter(o => o.status === 'in_progress').length;
-  const completedOrders = mockWorkshopOrders.filter(o => o.status === 'completed').length;
-  const delayedOrders = mockWorkshopOrders.filter(o => o.status === 'delayed').length;
+  const totalOrders = workOrders.length;
+  const draftOrders = workOrders.filter(o => o.status === WorkOrderStatus.DRAFT).length;
+  const scheduledOrders = workOrders.filter(o => o.status === WorkOrderStatus.SCHEDULED).length;
+  const inProgressOrders = workOrders.filter(o => o.status === WorkOrderStatus.IN_PROGRESS).length;
+  const completedOrders = workOrders.filter(o => o.status === WorkOrderStatus.COMPLETED).length;
+
+  // Calculate progress for a work order
+  const calculateProgress = (order: typeof workOrders[0]): number => {
+    if (order.status === WorkOrderStatus.COMPLETED) return 100;
+    if (order.status === WorkOrderStatus.DRAFT) return 0;
+    if (order.status === WorkOrderStatus.SCHEDULED) return 0;
+
+    // If in progress, calculate based on time
+    if (order.actual_start && order.scheduled_end) {
+      const start = new Date(order.actual_start).getTime();
+      const end = new Date(order.scheduled_end).getTime();
+      const now = Date.now();
+      const totalDuration = end - start;
+      const elapsed = now - start;
+
+      if (totalDuration > 0) {
+        return Math.min(Math.max(Math.round((elapsed / totalDuration) * 100), 0), 99);
+      }
+    }
+
+    return 50; // Default for in_progress without timestamps
+  };
+
+  // Loading state
+  if (loading && workOrders.length === 0) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <Loader2 className="animate-spin text-blue-600 mx-auto mb-4" size={48} />
+          <Text className="text-gray-600">Lade Werkstattaufträge...</Text>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -116,6 +89,19 @@ export function Workshop() {
         <Title>Werkstatt-Management</Title>
         <Text>Werkstattaufträge und Reparaturfortschritt</Text>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <Card className="border-l-4 border-red-500 bg-red-50">
+          <div className="flex items-start space-x-3">
+            <AlertCircle className="text-red-600 mt-1" size={20} />
+            <div>
+              <Title className="text-red-900">Fehler beim Laden</Title>
+              <Text className="text-red-700">{error}</Text>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -133,12 +119,24 @@ export function Workshop() {
 
         <Card>
           <div className="flex items-center space-x-3">
+            <div className="p-3 bg-gray-100 rounded-lg">
+              <Clock className="text-gray-600" size={20} />
+            </div>
+            <div>
+              <Text>Entwurf</Text>
+              <Title className="text-gray-600">{draftOrders}</Title>
+            </div>
+          </div>
+        </Card>
+
+        <Card>
+          <div className="flex items-center space-x-3">
             <div className="p-3 bg-blue-100 rounded-lg">
               <Clock className="text-blue-600" size={20} />
             </div>
             <div>
               <Text>Geplant</Text>
-              <Title className="text-blue-600">{plannedOrders}</Title>
+              <Title className="text-blue-600">{scheduledOrders}</Title>
             </div>
           </div>
         </Card>
@@ -166,35 +164,24 @@ export function Workshop() {
             </div>
           </div>
         </Card>
-
-        <Card>
-          <div className="flex items-center space-x-3">
-            <div className="p-3 bg-red-100 rounded-lg">
-              <AlertCircle className="text-red-600" size={20} />
-            </div>
-            <div>
-              <Text>Verzögert</Text>
-              <Title className="text-red-600">{delayedOrders}</Title>
-            </div>
-          </div>
-        </Card>
       </div>
 
       {/* Filters */}
       <Card>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as WorkOrderStatus | 'all')}>
             <SelectItem value="all">Alle Status</SelectItem>
-            <SelectItem value="planned">Geplant</SelectItem>
-            <SelectItem value="in_progress">In Arbeit</SelectItem>
-            <SelectItem value="completed">Abgeschlossen</SelectItem>
-            <SelectItem value="delayed">Verzögert</SelectItem>
+            <SelectItem value={WorkOrderStatus.DRAFT}>Entwurf</SelectItem>
+            <SelectItem value={WorkOrderStatus.SCHEDULED}>Geplant</SelectItem>
+            <SelectItem value={WorkOrderStatus.IN_PROGRESS}>In Arbeit</SelectItem>
+            <SelectItem value={WorkOrderStatus.COMPLETED}>Abgeschlossen</SelectItem>
+            <SelectItem value={WorkOrderStatus.CANCELLED}>Storniert</SelectItem>
           </Select>
 
           <Select value={workshopFilter} onValueChange={setWorkshopFilter}>
             <SelectItem value="all">Alle Werkstätten</SelectItem>
             {uniqueWorkshops.map((workshop) => (
-              <SelectItem key={workshop} value={workshop}>
+              <SelectItem key={workshop} value={workshop!}>
                 {workshop}
               </SelectItem>
             ))}
@@ -207,75 +194,91 @@ export function Workshop() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableHeaderCell>Auftrag</TableHeaderCell>
-              <TableHeaderCell>Lok</TableHeaderCell>
+              <TableHeaderCell>Auftragsnummer</TableHeaderCell>
+              <TableHeaderCell>Fahrzeug</TableHeaderCell>
               <TableHeaderCell>Werkstatt</TableHeaderCell>
               <TableHeaderCell>Status</TableHeaderCell>
               <TableHeaderCell>Aufgaben</TableHeaderCell>
-              <TableHeaderCell>Personal</TableHeaderCell>
+              <TableHeaderCell>Team</TableHeaderCell>
               <TableHeaderCell>Fortschritt</TableHeaderCell>
               <TableHeaderCell>Zeitplan</TableHeaderCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredOrders.map((order) => (
-              <TableRow key={order.id}>
-                <TableCell>
-                  <span className="font-mono font-medium">{order.id}</span>
-                </TableCell>
-                <TableCell>
-                  <span className="font-mono">{order.locomotive_id}</span>
-                </TableCell>
-                <TableCell>{order.workshop_name}</TableCell>
-                <TableCell>
-                  <StatusBadge status={order.status} />
-                </TableCell>
-                <TableCell>
-                  <div className="flex flex-wrap gap-1">
-                    {order.tasks.map((task, idx) => (
-                      <Badge key={idx} size="xs" color="gray">
-                        {task}
-                      </Badge>
-                    ))}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {order.assigned_staff.length > 0 ? (
-                    <Badge color="blue">{order.assigned_staff.length} MA</Badge>
-                  ) : (
-                    <Badge color="red">Keine</Badge>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <div className="w-24">
-                    <ProgressBar value={order.progress} color={getProgressColor(order.progress)} />
-                    <Text className="text-xs mt-1">{order.progress}%</Text>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="text-xs">
-                    <div>
-                      {new Date(order.planned_start).toLocaleDateString('de-DE', {
-                        day: '2-digit',
-                        month: '2-digit',
-                      })}
-                      {' - '}
-                      {new Date(order.planned_end).toLocaleDateString('de-DE', {
-                        day: '2-digit',
-                        month: '2-digit',
-                      })}
+            {filteredOrders.map((order) => {
+              const progress = calculateProgress(order);
+
+              return (
+                <TableRow key={order.id}>
+                  <TableCell>
+                    <span className="font-mono font-medium">{order.order_number}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-mono">{order.vehicle_id}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm">{order.workshop_id || '-'}</span>
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={order.status} />
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {order.tasks && order.tasks.length > 0 ? (
+                        order.tasks.map((task, idx) => (
+                          <Badge key={idx} size="xs" color="gray">
+                            {task}
+                          </Badge>
+                        ))
+                      ) : (
+                        <Text className="text-xs text-gray-500">Keine</Text>
+                      )}
                     </div>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+                  </TableCell>
+                  <TableCell>
+                    {order.assigned_team ? (
+                      <Badge color="blue">{order.assigned_team}</Badge>
+                    ) : (
+                      <Badge color="red">Nicht zugewiesen</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="w-24">
+                      <ProgressBar value={progress} color={getProgressColor(progress)} />
+                      <Text className="text-xs mt-1">{progress}%</Text>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-xs">
+                      {order.scheduled_start && order.scheduled_end ? (
+                        <div>
+                          {new Date(order.scheduled_start).toLocaleDateString('de-DE', {
+                            day: '2-digit',
+                            month: '2-digit',
+                          })}
+                          {' - '}
+                          {new Date(order.scheduled_end).toLocaleDateString('de-DE', {
+                            day: '2-digit',
+                            month: '2-digit',
+                          })}
+                        </div>
+                      ) : (
+                        <Text className="text-gray-500">Nicht geplant</Text>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
 
-        {filteredOrders.length === 0 && (
+        {filteredOrders.length === 0 && !loading && (
           <div className="text-center py-8">
             <Text className="text-gray-500">
-              Keine Werkstattaufträge gefunden. Passen Sie die Filter an.
+              {workOrders.length === 0
+                ? 'Keine Werkstattaufträge vorhanden. Erstellen Sie einen neuen Auftrag.'
+                : 'Keine Werkstattaufträge gefunden. Passen Sie die Filter an.'}
             </Text>
           </div>
         )}
@@ -285,12 +288,13 @@ export function Workshop() {
 }
 
 // Helper component for status badges
-function StatusBadge({ status }: { status: string }) {
-  const statusConfig: Record<string, { label: string; color: 'blue' | 'orange' | 'green' | 'red' | 'gray' }> = {
-    planned: { label: 'Geplant', color: 'blue' },
-    in_progress: { label: 'In Arbeit', color: 'orange' },
-    completed: { label: 'Abgeschlossen', color: 'green' },
-    delayed: { label: 'Verzögert', color: 'red' },
+function StatusBadge({ status }: { status: WorkOrderStatus }) {
+  const statusConfig: Record<WorkOrderStatus, { label: string; color: 'blue' | 'orange' | 'green' | 'red' | 'gray' }> = {
+    [WorkOrderStatus.DRAFT]: { label: 'Entwurf', color: 'gray' },
+    [WorkOrderStatus.SCHEDULED]: { label: 'Geplant', color: 'blue' },
+    [WorkOrderStatus.IN_PROGRESS]: { label: 'In Arbeit', color: 'orange' },
+    [WorkOrderStatus.COMPLETED]: { label: 'Abgeschlossen', color: 'green' },
+    [WorkOrderStatus.CANCELLED]: { label: 'Storniert', color: 'red' },
   };
 
   const config = statusConfig[status] || { label: status, color: 'gray' };
