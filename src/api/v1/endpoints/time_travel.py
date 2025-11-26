@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 
-from ....models.database import get_db
+from ....core.database import get_db
 from ....services.time_travel import TimeTravelQuery, TimePoint
 from ....services.audit_trail import AuditTrailService
 from ....services.change_history import ChangeHistoryService

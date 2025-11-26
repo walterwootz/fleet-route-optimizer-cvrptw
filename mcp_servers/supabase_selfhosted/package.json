@@ -1,0 +1,21 @@
+{
+  "name": "supabase-selfhosted-mcp",
+  "version": "1.0.0",
+  "description": "MCP Server for Self-Hosted Supabase",
+  "main": "server.py",
+  "scripts": {
+    "start": "python server.py"
+  },
+  "keywords": [
+    "mcp",
+    "supabase",
+    "database"
+  ],
+  "author": "DeepALL",
+  "license": "MIT",
+  "dependencies": {
+    "httpx": "^0.24.0",
+    "mcp": "^0.1.0"
+  }
+}
+

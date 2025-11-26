@@ -10,7 +10,7 @@ from uuid import uuid4
 from sqlalchemy.orm import Session
 
 from .prediction_service import PredictionService
-from ...models.database import SessionLocal
+from ...core.database import SessionLocal
 from ...models.railfleet.ml_models import MLPrediction
 from ...config import get_logger
 

@@ -11,11 +11,11 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, and_
 from collections import defaultdict, Counter
 
-from src.models.railfleet.event import Event
+from src.models.railfleet.events import Event
 from src.models.railfleet.vehicle import Vehicle
-from src.models.railfleet.workorder import WorkOrder
-from src.models.railfleet.inventory import InventoryItem
-from src.models.railfleet.staff import StaffMember
+from src.models.railfleet.maintenance import WorkOrder
+from src.models.railfleet.inventory import Part
+from src.models.railfleet.hr import Staff
 from src.services.analytics.metrics_calculator import MetricsCalculator, TimeSeriesDataPoint
 
 

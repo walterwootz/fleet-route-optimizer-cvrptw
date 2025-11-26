@@ -6,7 +6,7 @@ from typing import List, Optional
 from datetime import datetime
 
 from ....core.database import get_db
-from ....core.security import get_current_user
+from .auth import get_current_user
 from ....models.railfleet.user import User
 from ....models.railfleet.events import Event
 from ....services.event_store import EventStore

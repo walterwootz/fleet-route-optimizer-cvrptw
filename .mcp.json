@@ -1,0 +1,27 @@
+{
+  "mcpServers": {
+    "supabase-selfhosted": {
+      "type": "stdio",
+      "command": "python",
+      "args": [
+        "mcp_servers/supabase_selfhosted/server.py"
+      ],
+      "env": {
+        "SUPABASE_URL": "https://supabasekong-s0wkccwgk84w0o8ww8s8wccs.luli-server.de:8000",
+        "SUPABASE_ANON_KEY": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTc2MzEzNzUwMCwiZXhwIjo0OTE4ODExMTAwLCJyb2xlIjoiYW5vbiJ9.js6APq3AWq6hhhxGci_sEyO_fOLmY3935iWkyLeCKl4",
+        "SUPABASE_SERVICE_KEY": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTc2MzEzNzUwMCwiZXhwIjo0OTE4ODExMTAwLCJyb2xlIjoic2VydmljZV9yb2xlIn0._oIZyDQ_2EEc4UnrUg7Ch9xGVeNvm8gb_xclh3N2JqA"
+      }
+    },
+    "sqlite-local": {
+      "type": "stdio",
+      "command": "python",
+      "args": [
+        "mcp_servers/sqlite_local/server.py"
+      ],
+      "env": {
+        "DATABASE_PATH": "railfleet.db"
+      }
+    }
+  }
+}
+

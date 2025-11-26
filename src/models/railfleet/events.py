@@ -3,7 +3,7 @@
 from datetime import datetime
 from sqlalchemy import Column, String, Integer, DateTime, JSON, Index, text
 from sqlalchemy.dialects.postgresql import JSONB
-from ..database import Base
+from ...core.database import Base
 
 
 class Event(Base):
@@ -38,7 +38,7 @@ class Event(Base):
 
     # Event data (JSONB for PostgreSQL performance)
     data = Column(JSONB, nullable=False, default=dict)
-    metadata = Column(JSONB, nullable=False, default=dict)
+    event_metadata = Column(JSONB, nullable=False, default=dict)
 
     # Indexes for common queries
     __table_args__ = (

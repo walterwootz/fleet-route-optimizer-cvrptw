@@ -8,10 +8,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from .api import router as solver_router
 
 # RailFleet Manager routes
-from .api.v1.endpoints import auth, vehicles, maintenance, workshops, sync, scheduler, transfer, hr, docs, policy, parts, stock, procurement, finance, reports, events, projections, sync_crdt, time_travel, ml, analytics, fleet_one
+from .api.v1.endpoints import auth, vehicles, maintenance, workshops, sync, scheduler, transfer, hr, docs, policy, parts, stock, procurement, finance, reports, events, projections, sync_crdt, time_travel, ml, analytics, fleet_one, database_agent
 
-# Database
-from .core.database import init_db
+# Database-backed routes (Phase 2)
+from .api.routes_db import vehicles_db, maintenance_db, workshop_db
+
+# Database (Hybrid: SQLite + Supabase)
+from .core.database_hybrid import init_db, get_database_info
 
 # Logging
 from .config import setup_logging, get_settings, get_logger
@@ -86,9 +89,15 @@ app.include_router(time_travel.router, prefix="/api/v1", tags=["Time-Travel & Au
 app.include_router(ml.router, prefix="/api/v1", tags=["Machine Learning"])
 app.include_router(analytics.router, prefix="/api/v1", tags=["Analytics"])
 app.include_router(fleet_one.router, prefix="/api/v1", tags=["FLEET-ONE Agent"])
+app.include_router(database_agent.router, prefix="/api/v1/database-agent", tags=["Database Agent"])
 
 # Include original CVRPTW solver routes
 app.include_router(solver_router, prefix="/api/v1/solver", tags=["Route Optimization"])
+
+# Include Database-backed routes (Phase 2 - Real Data)
+app.include_router(vehicles_db.router, tags=["Vehicles (DB)"])
+app.include_router(maintenance_db.router, tags=["Maintenance (DB)"])
+app.include_router(workshop_db.router, tags=["Workshop (DB)"])
 
 
 @app.get("/", tags=["Root"])

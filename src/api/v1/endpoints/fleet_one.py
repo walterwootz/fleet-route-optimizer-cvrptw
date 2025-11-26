@@ -19,7 +19,7 @@ from typing import Dict, List, Optional, Any
 from pydantic import BaseModel
 from datetime import datetime, date
 
-from src.database import get_db
+from ....core.database import get_db
 from src.services.fleet_one import (
     get_agent,
     get_handlers,

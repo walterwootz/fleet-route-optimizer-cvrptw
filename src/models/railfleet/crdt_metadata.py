@@ -3,7 +3,7 @@
 from datetime import datetime
 from sqlalchemy import Column, String, Integer, DateTime, Boolean, Index, text
 from sqlalchemy.dialects.postgresql import JSONB
-from ..database import Base
+from ...core.database import Base
 
 
 class CRDTMetadataModel(Base):

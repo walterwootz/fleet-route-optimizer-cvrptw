@@ -12,11 +12,11 @@ from sqlalchemy import func, and_, or_
 from collections import defaultdict
 import statistics
 
-from src.models.railfleet.event import Event
+from src.models.railfleet.events import Event
 from src.models.railfleet.vehicle import Vehicle
-from src.models.railfleet.workorder import WorkOrder
-from src.models.railfleet.inventory import InventoryItem
-from src.models.railfleet.staff import StaffMember
+from src.models.railfleet.maintenance import WorkOrder
+from src.models.railfleet.inventory import Part
+from src.models.railfleet.hr import Staff
 
 
 class MetricValue:

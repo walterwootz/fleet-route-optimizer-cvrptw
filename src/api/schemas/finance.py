@@ -125,7 +125,7 @@ class InvoiceApproveRequest(BaseModel):
 
 class BudgetBase(BaseModel):
     """Base budget schema."""
-    period: str = Field(..., regex=r'^\d{4}-\d{2}$', description="Period in YYYY-MM format")
+    period: str = Field(..., pattern=r'^\d{4}-\d{2}$', description="Period in YYYY-MM format")
     cost_center: str = Field(..., min_length=1, max_length=50, description="Cost center code")
     category: Optional[str] = Field(None, max_length=100, description="Budget category")
     planned_amount: Decimal = Field(0, ge=0, description="Planned budget")

@@ -20,7 +20,7 @@ from sqlalchemy.orm import Session
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
 
-from src.database import get_db
+from ....core.database import get_db
 from src.services.analytics.metrics_calculator import MetricsCalculator
 from src.services.analytics.dashboard_service import DashboardService
 

@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 
-from ....models.database import get_db
+from ....core.database import get_db
 from ....models.railfleet.ml_models import MLModel, MLPrediction
 from ....services.ml.feature_engineering import FeatureEngineering
 from ....services.ml.prediction_service import PredictionService

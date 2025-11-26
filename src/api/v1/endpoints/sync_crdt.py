@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 
-from ....models.database import get_db
+from ....core.database import get_db
 from ....models.railfleet.sync_device import SyncDevice, SyncSession
 from ....models.railfleet.crdt_metadata import CRDTMetadataModel
 from ....services.sync_engine import SyncEngine, SyncResult

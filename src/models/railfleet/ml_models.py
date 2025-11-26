@@ -3,7 +3,7 @@
 from datetime import datetime
 from sqlalchemy import Column, String, Integer, DateTime, Float, Boolean, text
 from sqlalchemy.dialects.postgresql import JSONB
-from ..database import Base
+from ...core.database import Base
 
 
 class MLModel(Base):
@@ -76,7 +76,7 @@ class MLPrediction(Base):
     features = Column(JSONB, nullable=False, default=dict)
 
     # Metadata
-    metadata = Column(JSONB, nullable=False, default=dict)
+    prediction_metadata = Column(JSONB, nullable=False, default=dict)
 
     # Timestamp
     predicted_at = Column(

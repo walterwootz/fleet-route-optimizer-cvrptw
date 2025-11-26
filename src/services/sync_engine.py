@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 
 from ..models.railfleet.crdt_metadata import CRDTMetadataModel, CRDTOperation
-from ..models.crdt.vector_clock import VectorClock, VectorClockComparison
+from ..models.crdt.vector_clock import VectorClock, ClockRelation
 from ..models.crdt.base import CRDTType
 from ..models.crdt.lww_register import LWWRegister
 from ..models.crdt.or_set import ORSet
@@ -32,7 +32,7 @@ class SyncConflict:
         remote_device: str,
         local_clock: VectorClock,
         remote_clock: VectorClock,
-        comparison: VectorClockComparison,
+        comparison: ClockRelation,
     ):
         self.entity_type = entity_type
         self.entity_id = entity_id
@@ -44,7 +44,7 @@ class SyncConflict:
 
     def is_concurrent(self) -> bool:
         """Check if this is a concurrent conflict."""
-        return self.comparison == VectorClockComparison.CONCURRENT
+        return self.comparison == ClockRelation.CONCURRENT
 
     def __repr__(self):
         return (
@@ -307,7 +307,7 @@ class SyncEngine:
             comparison = local_clock.compare(remote_clock)
 
             # Detect conflicts
-            if comparison == VectorClockComparison.CONCURRENT:
+            if comparison == ClockRelation.CONCURRENT:
                 conflict = SyncConflict(
                     entity_type,
                     entity_id,
@@ -322,8 +322,8 @@ class SyncEngine:
 
             # Update if remote is newer or concurrent
             if comparison in (
-                VectorClockComparison.BEFORE,
-                VectorClockComparison.CONCURRENT,
+                ClockRelation.BEFORE,
+                ClockRelation.CONCURRENT,
             ):
                 local_state.vector_clock = remote_clock.to_dict()
                 local_state.crdt_data = remote_state["crdt_data"]

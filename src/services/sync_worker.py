@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from sqlalchemy.orm import Session
 
-from ..models.database import SessionLocal
+from ..core.database import SessionLocal
 from ..services.sync_engine import SyncEngine
 from ..services.sync_queue import get_queue_manager, SyncStatus
 from ..config import get_logger

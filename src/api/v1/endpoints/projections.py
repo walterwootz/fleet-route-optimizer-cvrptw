@@ -6,7 +6,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from ....core.database import get_db
-from ....core.security import get_current_user
+from .auth import get_current_user
 from ....models.railfleet.user import User
 from ....services.projections.base import ProjectionManager
 from ....services.projections import (
